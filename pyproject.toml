@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nyx-gen"
+version = "1.0.0"                   # <- ta version unique (source de vérité)
+description = "Nyx code generator"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Jérôme Odier", email = "jerome.odier@lpsc.in2p3.fr" }]
+
+[project.scripts]
+nyx-gen = "nyx_gen.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nyx_gen"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/nyx_gen", "/README.md", "/LICENSE", "/pyproject.toml"]
+
+[tool.hatch.build]
+exclude = ["bin/*"]

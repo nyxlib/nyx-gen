@@ -4,7 +4,7 @@
 import json
 import argparse
 
-from . import generators
+from . import generators, __version__
 
 ########################################################################################################################
 
@@ -13,6 +13,8 @@ def main():
     ####################################################################################################################
 
     parser = argparse.ArgumentParser(description = 'Generate an Nyx driver skeleton from a description file')
+
+    parser.add_argument('--version', action = 'version', version = __version__, help = 'Print version information and exit')
 
     parser.add_argument('--override-project', action = 'store_true', help = 'Override the project output folder')
 
@@ -27,6 +29,14 @@ def main():
     parser.add_argument('--descr', type = str, required = True, help = 'Driver description file')
 
     args = parser.parse_args()
+
+    ####################################################################################################################
+
+    if args.version:
+
+        print(__version__)
+
+        return 0
 
     ####################################################################################################################
 
