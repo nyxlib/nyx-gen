@@ -55,7 +55,7 @@ find_package(NyxNode REQUIRED)
 
 set(SOURCE_FILES
 {%- for d in devices %}
-    ./src/Device_{{ d.name|lower }}.{{ src_ext }}
+    ./src/device_{{ d.name|lower }}.{{ src_ext }}
 {%- endfor %}
     ./src/main.{{ src_ext }}
 )
@@ -248,7 +248,7 @@ private:
 
         for d in self._devices:
 
-            filename = os.path.join(self._driver_path, 'include', f'Device_{d["name"].lower()}.{self._head_ext}')
+            filename = os.path.join(self._driver_path, 'include', f'device_{d["name"].lower()}.{self._head_ext}')
 
             if self._override_device or not os.path.isfile(filename):
 
@@ -453,7 +453,7 @@ void Device_{{ device.name|lower }}::finalize()
 
         for d in self._devices:
 
-            filename = os.path.join(self._driver_path, 'src', 'autogen', f'Device_{d["name"].lower()}_glue.{self._src_ext}')
+            filename = os.path.join(self._driver_path, 'src', 'autogen', f'device_{d["name"].lower()}_glue.{self._src_ext}')
 
             with open(filename, 'wt', encoding = 'utf-8') as f:
 
@@ -470,7 +470,7 @@ void Device_{{ device.name|lower }}::finalize()
         template = '''
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#include <Device_{{ device.name|lower }}.{{ head_ext }}>
+#include <device_{{ device.name|lower }}.{{ head_ext }}>
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -478,7 +478,7 @@ namespace nyx_{{ descr.nodeName|lower }} {
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 
-#include "autogen/Device_{{ device.name|lower }}_glue.{{ src_ext }}"
+#include "autogen/device_{{ device.name|lower }}_glue.{{ src_ext }}"
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -539,7 +539,7 @@ void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_c
 
         for d in self._devices:
 
-            filename = os.path.join(self._driver_path, 'src', f'Device_{d["name"].lower()}.{self._src_ext}')
+            filename = os.path.join(self._driver_path, 'src', f'device_{d["name"].lower()}.{self._src_ext}')
 
             if self._override_device or not os.path.isfile(filename):
 
@@ -586,7 +586,7 @@ void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_c
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 {% for d in devices %}
-#include <Device_{{ d.name|lower }}.{{ head_ext }}>
+#include <device_{{ d.name|lower }}.{{ head_ext }}>
 {%- endfor %}
 
 #include "credentials.{{ head_ext }}"
