@@ -21,4 +21,4 @@ packages = ["nyx_gen"]
 include = ["/nyx_gen", "/README.md", "/LICENSE", "/pyproject.toml"]
 
 [tool.hatch.build]
-exclude = ["bin/*"]
+exclude = ["/bin/*"]
