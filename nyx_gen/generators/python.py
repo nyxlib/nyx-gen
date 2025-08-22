@@ -5,12 +5,22 @@ import os
 
 ########################################################################################################################
 
-from ..abstract_generator import AbstractGenerator, generator_config
+from .posix_c import PosixCGenerator
+
+from ..abstract_generator import generator_config
 
 ########################################################################################################################
 
-@generator_config(name = 'arduino-eth', null = 'nullptr', src_ext = 'cpp', head_ext = 'hpp')
-class ArduinoEthernetGenerator(AbstractGenerator):
+@generator_config(name = 'python', null = 'NULL', src_ext = 'c', head_ext = 'h')
+class PythonGenerator(PosixCGenerator):
+
+    ####################################################################################################################
+
+    def create_directories(self) -> None:
+
+        super().create_directories()
+
+        os.makedirs(os.path.join(self._driver_path, 'grc'), exist_ok = True)
 
     ####################################################################################################################
 
