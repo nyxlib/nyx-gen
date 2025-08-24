@@ -18,6 +18,8 @@ def main():
 
     parser.add_argument('--version', action = 'version', version = __version__, help = 'Print version information and exit')
 
+    parser.add_argument('--profiles', action = 'version', version = ', '.join(generators.keys()), help = 'Print profile names and exit')
+
     parser.add_argument('--override-project', action = 'store_true', help = 'Override the project output folder')
 
     parser.add_argument('--override-device', action = 'store_true', help = 'Override the device files')

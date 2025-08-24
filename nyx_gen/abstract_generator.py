@@ -17,7 +17,7 @@ from jinja2 import Environment, StrictUndefined
 
 def generator_config(name: str, null: str, src_ext: str, head_ext: str):
 
-    def decorator(cls: 'AbstractGenerator') -> 'AbstractGenerator':
+    def f(cls: 'AbstractGenerator') -> 'AbstractGenerator':
 
         cls._name = name
         cls._null = null
@@ -26,7 +26,7 @@ def generator_config(name: str, null: str, src_ext: str, head_ext: str):
 
         return cls
 
-    return decorator
+    return f
 
 ########################################################################################################################
 
