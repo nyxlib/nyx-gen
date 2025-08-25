@@ -31,6 +31,8 @@ class PosixCppGenerator(AbstractGenerator):
         self._generate_main()
 
     ####################################################################################################################
+    # CMAKE
+    ####################################################################################################################
 
     def _generate_cmake(self) -> None:
 
@@ -102,8 +104,7 @@ target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' i
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-namespace nyx_{{ descr.nodeName|lower }}
-{
+namespace nyx_{{ descr.nodeName|lower }} {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -112,12 +113,10 @@ class DeviceBase
 public:
     virtual ~DeviceBase() = default;
 
-public:
     virtual void initialize() = 0;
 
     virtual void finalize() = 0;
 
-public:
     inline void add_vector(nyx_dict_t *v)
     {
         _vectors.push_back(v);
@@ -164,7 +163,7 @@ private:
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#include <DeviceBase.{{ head_ext }}>
+#include "DeviceBase.{{ head_ext }}"
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -175,64 +174,53 @@ namespace nyx_{{ descr.nodeName|lower }} {
 class Device_{{ device.name|lower }} : public DeviceBase
 {
 public:
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     Device_{{ device.name|lower }}();
 
     ~Device_{{ device.name|lower }}() override;
 
-/*--------------------------------------------------------------------------------------------------------------------*/
-{%- for v in device.vectors %}
-{%-   if v.callback %}
-
-public:
-    void on_{{ v.name|lower }}_changed(bool modified);
-{%-   endif %}
+    /*----------------------------------------------------------------------------------------------------------------*/
+{%  for v in device.vectors -%}
 {%-   for df in v.defs if df.callback %}
+
 {%-     if   v.type == 'number' and 'd' in df.format %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(int value, bool modified);
+    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, int value, bool modified);
 {%-     elif v.type == 'number' and 'l' in df.format %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(long value, bool modified);
+    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, long value, bool modified);
 {%-     elif v.type == 'number' and 'f' in df.format %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(double value, bool modified);
+    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, double value, bool modified);
 {%-     elif v.type == 'text' %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(const char *value, bool modified);
+    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, STR_t value, bool modified);
 {%-     elif v.type == 'switch' %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(int value, bool modified);
+    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, nyx_onoff_t value, bool modified);
 {%-     elif v.type == 'light' %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(int value, bool modified);
-{%-     else %}
-public:
-    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_dict_t *def_vector, bool modified);
+    void on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, nyx_state_t value, bool modified);
 {%-     endif %}
 {%-   endfor %}
-{%- endfor %}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
+{%-   if v.callback %}
+    void on_{{ v.name|lower }}_changed(nyx_object_t *vector, bool modified);
+{%-   endif %}
+{% endfor %}
+    /*----------------------------------------------------------------------------------------------------------------*/
 
 private:
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     void initialize() override;
 
     void finalize() override;
 
-private:
-    static Device_{{ device.name|lower }} *s_self;
-{%- for v in device.vectors %}
-{%-   if v.callback %}
-
-    static void _{{ v.name|lower }}_callback(struct nyx_object_s *vector, bool modified);
-{%-   endif %}
+    /*----------------------------------------------------------------------------------------------------------------*/
+{%  for v in device.vectors -%}
 {%-   for df in v.defs if df.callback %}
-
-    static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(struct nyx_object_s *def_vector, bool modified);
-{%-   endfor %}
-{%- endfor %}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
+    static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_vector, bool modified);
+{%-   endfor -%}
+{%-   if v.callback %}
+    static void _{{ v.name|lower }}_callback(nyx_object_t *vector, bool modified);
+{%-   endif %}
+{% endfor %}
+    /*----------------------------------------------------------------------------------------------------------------*/
 };
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -251,13 +239,11 @@ private:
             filename = os.path.join(self._driver_path, 'include', f'device_{d["name"].lower()}.{self._head_ext}')
 
             if self._override_device or not os.path.isfile(filename):
-
-                with open(filename, 'wt', encoding = 'utf-8') as f:
-
+                with open(filename, 'wt', encoding='utf-8') as f:
                     f.write(self.render(
                         template,
-                        descr = self._descr,
-                        device = d
+                        descr=self._descr,
+                        device=d
                     ))
 
     ####################################################################################################################
@@ -267,75 +253,73 @@ private:
         template = '''
 /* !!! AUTOGENERATED FILE !!! */
 /*--------------------------------------------------------------------------------------------------------------------*/
-
-Device_{{ device.name|lower }} *Device_{{ device.name|lower }}::s_self = {{ null }};
-
-{%- for v in device.vectors %}
+{%  for v in device.vectors %}
 {%-   for df in v.defs %}
-
 static nyx_dict_t *s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = {{ null }};
 {%-   endfor %}
-
 static nyx_dict_t *s_vector_{{ device.name|lower }}_{{ v.name|lower }} = {{ null }};
-
-{%- endfor %}
-
+{% endfor %}
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* DEF VECTOR CALLBACKS                                                                                               */
 /*--------------------------------------------------------------------------------------------------------------------*/
 {%- for v in device.vectors %}
 {%-   for df in v.defs if df.callback %}
 
-void Device_{{ device.name|lower }}::_{{ v.name|lower }}_{{ df.name|lower }}_callback(struct nyx_object_s *def_vector, bool modified)
+void Device_{{ device.name|lower }}::_{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_vector, bool modified)
 {
-    if(s_self != {{ null }})
+    Device_{{ device.name|lower }} *self = (Device_{{ device.name|lower }} *) def_vector->ctx;
+
+    if(self != {{ null }})
     {
 {%-     if   v.type == 'number' and 'd' in df.format %}
         int value = nyx_number_def_get_int((nyx_dict_t *) def_vector);
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(value, modified);
+        self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(def_vector, value, modified);
 {%-     elif v.type == 'number' and 'l' in df.format %}
         long value = nyx_number_def_get_long((nyx_dict_t *) def_vector);
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(value, modified);
+        self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(def_vector, value, modified);
 {%-     elif v.type == 'number' and 'f' in df.format %}
         double value = nyx_number_def_get_double((nyx_dict_t *) def_vector);
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(value, modified);
+        self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(def_vector, value, modified);
 {%-     elif v.type == 'text' %}
-        const char *value = nyx_text_def_get((nyx_dict_t *) def_vector);
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(value, modified);
+        STR_t value = nyx_text_def_get((nyx_dict_t *) def_vector);
+        self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(def_vector, value, modified);
 {%-     elif v.type == 'switch' %}
-        int value = nyx_switch_def_get((nyx_dict_t *) def_vector);
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(value, modified);
+        nyx_onoff_t value = nyx_switch_def_get((nyx_dict_t *) def_vector);
+        self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(def_vector, value, modified);
 {%-     elif v.type == 'light' %}
-        int value = nyx_light_def_get((nyx_dict_t *) def_vector);
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(value, modified);
-{%-     else %}
-        s_self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed((nyx_dict_t *) def_vector, modified);
+        nyx_state_t value = nyx_light_def_get((nyx_dict_t *) def_vector);
+        self->on_{{ v.name|lower }}_{{ df.name|lower }}_changed(def_vector, value, modified);
 {%-     endif %}
     }
 }
 {%-   endfor %}
+{%- endfor %}
 
-{%-   if v.callback %}
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* VECTOR CALLBACKS                                                                                                   */
+/*--------------------------------------------------------------------------------------------------------------------*/
+{%- for v in device.vectors if v.callback %}
 
-void Device_{{ device.name|lower }}::_{{ v.name|lower }}_callback(struct nyx_object_s *vector, bool modified)
+void Device_{{ device.name|lower }}::_{{ v.name|lower }}_callback(nyx_object_t *vector, bool modified)
 {
-    if(s_self != {{ null }})
+    Device_{{ device.name|lower }} *self = (Device_{{ device.name|lower }} *) vector->ctx;
+
+    if(self != {{ null }})
     {
-        s_self->on_{{ v.name|lower }}_changed(modified);
+        self->on_{{ v.name|lower }}_changed(vector, modified);
     }
 }
-{%-   endif %}
-
 {%- endfor %}
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void Device_{{ device.name|lower }}::initialize()
 {
-    s_self = this;
-
 {%- for v in device.vectors %}
-
+    /*----------------------------------------------------------------------------------------------------------------*/
     /* VECTOR {{ device.name|upper }}::{{ v.name|upper }} */
-{%-   for df in v.defs %}
+    /*----------------------------------------------------------------------------------------------------------------*/
+{%    for df in v.defs %}
 
 {%-     if v.type == 'number' %}
     s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
@@ -350,23 +334,32 @@ void Device_{{ device.name|lower }}::initialize()
 {%-     elif v.type == 'stream' %}
     s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_def_new("{{ df.name }}", "{{ df.label }}");
 {%-     endif %}
-{%-   endfor %}
-
+{%-     if df.callback %}
+    s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     endif %}
+    s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.ctx = (void *) this;
+{%    endfor %}
+    /*----------------------------------------------------------------------------------------------------------------*/
+    
     nyx_dict_t *{{ device.name|lower }}_{{ v.name|lower }}_defs[] = {
-{%-   for df in v.defs %}
+{%-     for df in v.defs %}
         s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }},
-{%-   endfor %}
+{%-    endfor %}
         {{ null }},
     };
 
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    
     nyx_opts_t {{ device.name|lower }}_{{ v.name|lower }}_opts = {
-        .label   = {% if v.label|default(None) is not none %}"{{ v.label }}"{% else %}{{ null }}{% endif %},
-        .group   = {% if v.group|default(None) is not none %}"{{ v.group }}"{% else %}{{ null }}{% endif %},
-        .timeout = {% if v.timeout|default(None) is not none %}{{ v.timeout }}{% else %}0{% endif %},
-        .message = {% if v.message|default(None) is not none %}"{{ v.message }}"{% else %}{{ null }}{% endif %},
+        .label = {% if (v.label|default('')|trim)|length > 0 %}"{{ v.label|trim }}"{% else %}{{ null }}{% endif %},
+        .group = {% if (v.group|default('')|trim)|length > 0 %}"{{ v.group }}"{% else %}{{ null }}{% endif %},
+        .timeout = {{ v.timeout|default(0, true) }},
+        .message = {% if (v.message|default('')|trim)|length > 0 %}"{{ v.message }}"{% else %}{{ null }}{% endif %},
     };
 
-{%-   if v.type == 'number' %}
+    /*----------------------------------------------------------------------------------------------------------------*/
+{%    if v.type == 'number' %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }} = nyx_number_def_vector_new(
         "{{ device.name }}",
         "{{ v.name }}",
@@ -375,7 +368,7 @@ void Device_{{ device.name|lower }}::initialize()
         {{ device.name|lower }}_{{ v.name|lower }}_defs,
         &{{ device.name|lower }}_{{ v.name|lower }}_opts
     );
-{%-   elif v.type == 'text' %}
+{%    elif v.type == 'text' %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }} = nyx_text_def_vector_new(
         "{{ device.name }}",
         "{{ v.name }}",
@@ -384,7 +377,7 @@ void Device_{{ device.name|lower }}::initialize()
         {{ device.name|lower }}_{{ v.name|lower }}_defs,
         &{{ device.name|lower }}_{{ v.name|lower }}_opts
     );
-{%-   elif v.type == 'light' %}
+{%    elif v.type == 'light' %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }} = nyx_light_def_vector_new(
         "{{ device.name }}",
         "{{ v.name }}",
@@ -392,7 +385,7 @@ void Device_{{ device.name|lower }}::initialize()
         {{ device.name|lower }}_{{ v.name|lower }}_defs,
         &{{ device.name|lower }}_{{ v.name|lower }}_opts
     );
-{%-   elif v.type == 'switch' %}
+{%    elif v.type == 'switch' %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }} = nyx_switch_def_vector_new(
         "{{ device.name }}",
         "{{ v.name }}",
@@ -402,7 +395,7 @@ void Device_{{ device.name|lower }}::initialize()
         {{ device.name|lower }}_{{ v.name|lower }}_defs,
         &{{ device.name|lower }}_{{ v.name|lower }}_opts
     );
-{%-   elif v.type == 'blob' %}
+{%    elif v.type == 'blob' %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }} = nyx_blob_def_vector_new(
         "{{ device.name }}",
         "{{ v.name }}",
@@ -411,7 +404,7 @@ void Device_{{ device.name|lower }}::initialize()
         {{ device.name|lower }}_{{ v.name|lower }}_defs,
         &{{ device.name|lower }}_{{ v.name|lower }}_opts
     );
-{%-   elif v.type == 'stream' %}
+{%    elif v.type == 'stream' %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }} = nyx_stream_def_vector_new(
         "{{ device.name }}",
         "{{ v.name }}",
@@ -419,48 +412,41 @@ void Device_{{ device.name|lower }}::initialize()
         {{ device.name|lower }}_{{ v.name|lower }}_defs,
         &{{ device.name|lower }}_{{ v.name|lower }}_opts
     );
-{%-   endif %}
-
-{%-   if device.disabled|default(false) or v.disabled|default(false) %}
-
+{%   endif %}
+{%- if v.callback %}
+    s_vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback = _{{ v.name|lower }}_callback;
+{%-  endif %}
+{%- if device.disabled|default(false) or v.disabled|default(false) %}
     s_vector_{{ device.name|lower }}_{{ v.name|lower }}->base.flags |= NYX_FLAGS_DISABLED;
 {%-   endif %}
+    s_vector_{{ device.name|lower }}_{{ v.name|lower }}->base.ctx = (void *) this;
+
+    /*----------------------------------------------------------------------------------------------------------------*/
 
     this->add_vector(s_vector_{{ device.name|lower }}_{{ v.name|lower }});
-
-{%-   for df in v.defs if df.callback %}
-
-    s_vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-   endfor %}
-
-{%-   if v.callback %}
-
-    s_vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback = _{{ v.name|lower }}_callback;
-{%-   endif %}
-
-{%- endfor %}
+{% endfor %}
+    /*----------------------------------------------------------------------------------------------------------------*/
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void Device_{{ device.name|lower }}::finalize()
 {
-    s_self = {{ null }};
+    /* DO NOTHING  */
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 '''[1:]
 
         for d in self._devices:
+            filename = os.path.join(self._driver_path, 'src', 'autogen',
+                                    f'device_{d["name"].lower()}_glue.{self._src_ext}')
 
-            filename = os.path.join(self._driver_path, 'src', 'autogen', f'device_{d["name"].lower()}_glue.{self._src_ext}')
-
-            with open(filename, 'wt', encoding = 'utf-8') as f:
-
+            with open(filename, 'wt', encoding='utf-8') as f:
                 f.write(self.render(
                     template,
-                    descr = self._descr,
-                    device = d
+                    descr=self._descr,
+                    device=d
                 ))
 
     ####################################################################################################################
@@ -470,15 +456,15 @@ void Device_{{ device.name|lower }}::finalize()
         template = '''
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#include <device_{{ device.name|lower }}.{{ head_ext }}>
+#include "../include/device_{{ device.name|lower }}.{{ head_ext }}"
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 namespace nyx_{{ descr.nodeName|lower }} {
 
-/*---------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------*/
 
-#include "autogen/device_{{ device.name|lower }}_glue.{{ src_ext }}"
+#include "./autogen/device_{{ device.name|lower }}_glue.{{ src_ext }}"
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -499,38 +485,37 @@ Device_{{ device.name|lower }}::~Device_{{ device.name|lower }}()
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-{%- for v in device.vectors %}
-{%-   if v.callback %}
-
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_changed(bool modified)
-{
-    /* TO BE IMPLEMENTED */
-}
-{%-   endif %}
+{%- for v in device.vectors -%}
 {%-   for df in v.defs if df.callback %}
-
-{%-     if   v.type == 'number' and 'd' in df.format %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(int value, bool modified)
+{%      if   v.type == 'number' and 'd' in df.format %}
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, int value, bool modified)
 {%-     elif v.type == 'number' and 'l' in df.format %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(long value, bool modified)
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, long value, bool modified)
 {%-     elif v.type == 'number' and 'f' in df.format %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(double value, bool modified)
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, double value, bool modified)
 {%-     elif v.type == 'text' %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(const char *value, bool modified)
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, STR_t value, bool modified)
 {%-     elif v.type == 'switch' %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(int value, bool modified)
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, nyx_onoff_t value, bool modified)
 {%-     elif v.type == 'light' %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(int value, bool modified)
-{%-     else %}
-void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_dict_t *def_vector, bool modified)
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_changed(nyx_object_t *def_vector, nyx_state_t value, bool modified)
 {%-     endif %}
 {
     /* TO BE IMPLEMENTED */
 }
-{%-   endfor %}
-{%- endfor %}
 
 /*--------------------------------------------------------------------------------------------------------------------*/
+{%-   endfor -%}
+{%-   if v.callback %}
+
+void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_changed(nyx_object_t *vector, bool modified)
+{
+    /* TO BE IMPLEMENTED */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+{%-   endif -%}
+{%- endfor %}
 
 } /* namespace nyx_{{ descr.nodeName|lower }} */
 
@@ -578,15 +563,15 @@ void Device_{{ device.name|lower }}::on_{{ v.name|lower }}_{{ df.name|lower }}_c
         template = '''
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+#include <memory>
+#include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <csignal>
-#include <vector>
-#include <memory>
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-{% for d in devices %}
-#include <device_{{ d.name|lower }}.{{ head_ext }}>
+{%  for d in devices %}
+#include "../include/device_{{ d.name|lower }}.{{ head_ext }}"
 {%- endfor %}
 
 #include "credentials.{{ head_ext }}"
@@ -613,16 +598,12 @@ int main()
     nyx_memory_initialize();
 
     /*----------------------------------------------------------------------------------------------------------------*/
-{%  for d in devices %}
-    std::unique_ptr<nyx_{{ descr.nodeName|lower }}::Device_{{ d.name|lower }}> u_{{ d.name|lower }} = std::make_unique<nyx_{{ descr.nodeName|lower }}::Device_{{ d.name|lower }}>();
-{%- endfor %}
-
-    /*----------------------------------------------------------------------------------------------------------------*/
 
     std::vector<nyx_dict_t *> vector_list;
 
 {%- for d in devices %}
 
+    std::unique_ptr<nyx_{{ descr.nodeName|lower }}::Device_{{ d.name|lower }}> u_{{ d.name|lower }} = std::make_unique<nyx_{{ descr.nodeName|lower }}::Device_{{ d.name|lower }}>();
     {
         const auto &vecs = u_{{ d.name|lower }}->vectors();
         vector_list.insert(vector_list.end(), vecs.begin(), vecs.end());
