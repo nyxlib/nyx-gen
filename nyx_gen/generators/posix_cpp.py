@@ -439,8 +439,8 @@ void Device_{{ device.name|lower }}::finalize()
 '''[1:]
 
         for d in self._devices:
-            filename = os.path.join(self._driver_path, 'src', 'autogen',
-                                    f'device_{d["name"].lower()}_glue.{self._src_ext}')
+
+            filename = os.path.join(self._driver_path, 'src', 'autogen', f'glue_{d["name"].lower()}')
 
             with open(filename, 'wt', encoding='utf-8') as f:
                 f.write(self.render(
@@ -464,7 +464,7 @@ namespace nyx_{{ descr.nodeName|lower }} {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#include "./autogen/device_{{ device.name|lower }}_glue.{{ src_ext }}"
+#include "./autogen/glue_{{ device.name|lower }}"
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
