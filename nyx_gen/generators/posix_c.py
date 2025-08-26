@@ -78,8 +78,7 @@ target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' i
 
                 f.write(self.render(
                     template,
-                    descr = self._descr,
-                    cmake_files = [os.path.join('.', 'src', f'device_{d["name"].lower()}.{self._src_ext}') for d in self._devices]
+                    cmake_files = [os.path.join('.', 'src', f'device_{device["name"].lower()}.{self._src_ext}') for device in self._devices]
                 ))
 
     ####################################################################################################################
@@ -137,7 +136,6 @@ void nyx_glue_finalize();
 
             f.write(self.render(
                 template,
-                descr = self._descr,
                 devices = self._devices
             ))
 
@@ -161,8 +159,7 @@ void nyx_glue_finalize();
         with open(filename, 'wt', encoding = 'utf-8') as f:
 
             f.write(self.render(
-                template,
-                descr = self._descr
+                template
             ))
 
         ################################################################################################################
@@ -290,7 +287,6 @@ _err:
 
                 f.write(self.render(
                     template,
-                    descr = self._descr,
                     devices = self._devices
                 ))
 
@@ -373,9 +369,9 @@ void device_{{ device.name|lower }}_finalize()
 /*--------------------------------------------------------------------------------------------------------------------*/
 '''[1:]
 
-        for d in self._devices:
+        for device in self._devices:
 
-            filename = os.path.join(self._driver_path, 'src', f'device_{d["name"].lower()}.{self._src_ext}')
+            filename = os.path.join(self._driver_path, 'src', f'device_{device["name"].lower()}.{self._src_ext}')
 
             if self._override_device or not os.path.isfile(filename):
 
@@ -383,8 +379,7 @@ void device_{{ device.name|lower }}_finalize()
 
                     f.write(self.render(
                         template,
-                        descr = self._descr,
-                        device = d
+                        device = device
                     ))
 
         ################################################################################################################
@@ -552,7 +547,6 @@ void nyx_glue_finalize()
 
             f.write(self.render(
                 template,
-                descr = self._descr,
                 devices = self._devices
             ))
 

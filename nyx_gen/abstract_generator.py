@@ -91,6 +91,8 @@ class AbstractGenerator(abc.ABC):
 
         context = dict(context)
 
+        context['descr'] = self._descr
+
         context['null'] = self.__class__._null
         context['src_ext'] = self.__class__._src_ext
         context['head_ext'] = self.__class__._head_ext

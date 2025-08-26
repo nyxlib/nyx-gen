@@ -81,7 +81,6 @@ target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' i
 
                 f.write(self.render(
                     template,
-                    descr = self._descr,
                     devices = self._devices
                 ))
 
@@ -186,7 +185,6 @@ private:
 
                     f.write(self.render(
                         template,
-                        descr = self._descr,
                         device = device
                     ))
 
@@ -384,7 +382,6 @@ void Device{{ device.name|pascalcase }}::finalize()
 
                     f.write(self.render(
                         template,
-                        descr = self._descr,
                         device = device
                     ))
 
@@ -471,7 +468,6 @@ void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}Changed(nyx_ob
 
                     f.write(self.render(
                         template,
-                        descr = self._descr,
                         device = device
                     ))
 
@@ -546,8 +542,7 @@ protected:
             with open(filename, 'wt', encoding = 'utf-8') as f:
 
                 f.write(self.render(
-                    template,
-                    descr = self._descr
+                    template
                 ))
 
     ####################################################################################################################
@@ -659,7 +654,6 @@ int Driver::nodeTimeoutMS() const
 
                 f.write(self.render(
                     template,
-                    descr = self._descr,
                     devices = self._devices
                 ))
 
@@ -679,8 +673,7 @@ int Driver::nodeTimeoutMS() const
         with open(filename, 'wt', encoding = 'utf-8') as f:
 
             f.write(self.render(
-                template,
-                descr = self._descr
+                template
             ))
 
     ####################################################################################################################
@@ -714,7 +707,6 @@ int main()
 
                 f.write(self.render(
                     template,
-                    descr = self._descr,
                     devices = self._devices
                 ))
 
