@@ -97,6 +97,10 @@ target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' i
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 #include <nyx_node.hpp>
+{%- if (device.additionalHeaders|default('')|trim)|length > 0 %}
+
+{{ device.additionalHeaders|trim }}
+{%- endif %}
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -104,7 +108,7 @@ namespace nyx_{{ descr.nodeName|lower }} {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-class Device{{ device.name|pascalcase }} : public Nyx::BaseDevice
+class Device{{ device.name|pascalcase }} : public {% if (device.parentClass|default('')|trim)|length > 0 %}"{{ device.parentClass|trim }}"{% else %}Nyx::BaseDevice{% endif %}
 {
 public:
     /*----------------------------------------------------------------------------------------------------------------*/
