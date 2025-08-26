@@ -155,15 +155,6 @@ private:
     void finalize() override;
 
     /*----------------------------------------------------------------------------------------------------------------*/
-{%  for v in device.vectors -%}
-{%-   for df in v.defs if df.callback %}
-    static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_vector, bool modified);
-{%-   endfor -%}
-{%-   if v.callback %}
-    static void _{{ v.name|lower }}_callback(nyx_object_t *vector, bool modified);
-{%-   endif %}
-{% endfor %}
-    /*----------------------------------------------------------------------------------------------------------------*/
 };
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -210,7 +201,7 @@ static nyx_dict_t *s_vector_{{ device.name|lower }}_{{ v.name|lower }} = {{ null
 {%- for v in device.vectors %}
 {%-   for df in v.defs if df.callback %}
 
-void Device_{{ device.name|lower }}::_{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_vector, bool modified)
+static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_vector, bool modified)
 {
     Device_{{ device.name|lower }} *self = (Device_{{ device.name|lower }} *) def_vector->ctx;
 
@@ -245,7 +236,7 @@ void Device_{{ device.name|lower }}::_{{ v.name|lower }}_{{ df.name|lower }}_cal
 /*--------------------------------------------------------------------------------------------------------------------*/
 {%- for v in device.vectors if v.callback %}
 
-void Device_{{ device.name|lower }}::_{{ v.name|lower }}_callback(nyx_object_t *vector, bool modified)
+static void _{{ v.name|lower }}_callback(nyx_object_t *vector, bool modified)
 {
     Device_{{ device.name|lower }} *self = (Device_{{ device.name|lower }} *) vector->ctx;
 
