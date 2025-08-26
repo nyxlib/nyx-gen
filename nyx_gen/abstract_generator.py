@@ -3,13 +3,9 @@
 
 import os
 import abc
-import glob
 import shutil
 import typing
-import inspect
 import argparse
-
-from importlib import util
 
 from jinja2 import Environment, StrictUndefined
 
@@ -111,41 +107,23 @@ class AbstractGenerator(abc.ABC):
 # noinspection PyProtectedMember
 def detect_generators() -> typing.Dict[str, typing.Type[AbstractGenerator]]:
 
-    result = {}
+    ####################################################################################################################
+
+    from .generators.posix_c import PosixCGenerator
+    from .generators.posix_cpp import PosixCPPGenerator
+    from .generators.python import PythonGenerator
+    from .generators.arduino_eth import ArduinoEthGenerator
+    from .generators.arduino_wifi import ArduinoWifiGenerator
 
     ####################################################################################################################
 
-    for file in sorted(glob.glob(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'generators', '*.py'))):
-
-        spec = util.spec_from_file_location('nyx_gen.generators.{}'.format(os.path.split(os.path.splitext(file)[0])[1]), file)
-
-        mod = util.module_from_spec(spec)
-
-        spec.loader.exec_module(mod)
-
-        ##
-
-        for _, generator in inspect.getmembers(mod, inspect.isclass):
-
-            try:
-
-                if (
-                    generator._name is not None
-                    and
-                    generator._null is not None
-                    and
-                    generator._src_ext is not None
-                    and
-                    generator._head_ext is not None
-                    and
-                    issubclass(generator, AbstractGenerator)
-                ):
-
-                    result[generator._name] = generator
-
-            except Exception as e:
-
-                print('Error importing `{}`: {}'.format(file, e.__str__()))
+    result = {
+        PosixCGenerator._name: PosixCGenerator,
+        PosixCPPGenerator._name: PosixCPPGenerator,
+        PythonGenerator._name: PythonGenerator,
+        ArduinoEthGenerator._name: ArduinoEthGenerator,
+        ArduinoWifiGenerator._name: ArduinoWifiGenerator,
+    }
 
     ####################################################################################################################
 

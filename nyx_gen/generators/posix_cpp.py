@@ -10,7 +10,7 @@ from ..abstract_generator import AbstractGenerator, generator_config
 ########################################################################################################################
 
 @generator_config(name = 'posix-c++', null = 'nullptr', src_ext = 'cpp', head_ext = 'hpp')
-class PosixCppGenerator(AbstractGenerator):
+class PosixCPPGenerator(AbstractGenerator):
 
     ####################################################################################################################
 
