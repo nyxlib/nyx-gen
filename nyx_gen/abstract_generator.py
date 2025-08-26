@@ -150,3 +150,7 @@ def detect_generators() -> typing.Dict[str, typing.Type[AbstractGenerator]]:
     return result
 
 ########################################################################################################################
+
+AbstractGenerator._env.filters['pascalcase'] = lambda s: ''.join(part.capitalize() for part in s.split('_') if part)
+
+########################################################################################################################
