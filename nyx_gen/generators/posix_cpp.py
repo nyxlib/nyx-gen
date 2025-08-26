@@ -48,7 +48,7 @@ project({{ descr.nodeName|lower }} CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_compile_options(-Wall -Wno-unknown-pragmas -Wno-unused-function -O3)
+add_compile_options(-Wall -Wno-unknown-pragmas -Wno-unused-function -O0 -g)
 
 ########################################################################################################################
 
@@ -299,7 +299,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     /*----------------------------------------------------------------------------------------------------------------*/
 {%    if v.type == 'number' %}
     this->vector_{{ v.name|lower }} = nyx_number_def_vector_new(
-        "{{ device.name }}",
+        this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
@@ -308,7 +308,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     );
 {%    elif v.type == 'text' %}
     this->vector_{{ v.name|lower }} = nyx_text_def_vector_new(
-        "{{ device.name }}",
+        this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
@@ -317,7 +317,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     );
 {%    elif v.type == 'light' %}
     this->vector_{{ v.name|lower }} = nyx_light_def_vector_new(
-        "{{ device.name }}",
+        this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.name|lower }}_defs,
@@ -325,7 +325,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     );
 {%    elif v.type == 'switch' %}
     this->vector_{{ v.name|lower }} = nyx_switch_def_vector_new(
-        "{{ device.name }}",
+        this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
@@ -335,7 +335,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     );
 {%    elif v.type == 'blob' %}
     this->vector_{{ v.name|lower }} = nyx_blob_def_vector_new(
-        "{{ device.name }}",
+        this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
@@ -344,7 +344,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     );
 {%    elif v.type == 'stream' %}
     this->vector_{{ v.name|lower }} = nyx_stream_def_vector_new(
-        "{{ device.name }}",
+        this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.name|lower }}_defs,
