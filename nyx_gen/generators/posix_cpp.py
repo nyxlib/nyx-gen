@@ -94,8 +94,8 @@ target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' i
         template = '''
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#ifndef NYX_{{ descr.nodeName|upper }}_DEVICE_{{ device.name|upper }}_{{ head_ext|upper }}
-#define NYX_{{ descr.nodeName|upper }}_DEVICE_{{ device.name|upper }}_{{ head_ext|upper }}
+#ifndef NYX_{{ descr.nodeName|upper }}_{{ device.name|upper }}_{{ head_ext|upper }}
+#define NYX_{{ descr.nodeName|upper }}_{{ device.name|upper }}_{{ head_ext|upper }}
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -173,7 +173,7 @@ private:
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#endif /* NYX_{{ descr.nodeName|upper }}_DEVICE_{{ device.name|upper }}_{{ head_ext|upper }} */
+#endif /* NYX_{{ descr.nodeName|upper }}_{{ device.name|upper }}_{{ head_ext|upper }} */
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 '''[1:]
