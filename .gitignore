@@ -1,5 +1,5 @@
 .idea
 .venv
-build
 __pycache__
-bin/nyx-gen-*
+bin/build/
+bin/nyx-gen-*/
