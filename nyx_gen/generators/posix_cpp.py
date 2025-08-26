@@ -32,8 +32,6 @@ class PosixCppGenerator(AbstractGenerator):
         self._generate_main()
 
     ####################################################################################################################
-    # CMAKE
-    ####################################################################################################################
 
     def _generate_cmake(self) -> None:
 
@@ -380,16 +378,16 @@ void Device{{ device.name|pascalcase }}::finalize()
 
             filename = os.path.join(self._driver_path, 'src', 'autogen', f'glue_{device["name"].lower()}')
 
-            with open(filename, 'wt', encoding = 'utf-8') as f:
+            if self._override_device or not os.path.isfile(filename):
 
-                f.write(self.render(
-                    template,
-                    descr = self._descr,
-                    device = device
-                ))
+                with open(filename, 'wt', encoding = 'utf-8') as f:
 
-    ####################################################################################################################
-    # src/device_<Device>.cpp
+                    f.write(self.render(
+                        template,
+                        descr = self._descr,
+                        device = device
+                    ))
+
     ####################################################################################################################
 
     def _generate_device_sources(self) -> None:
@@ -543,15 +541,15 @@ protected:
 
         filename = os.path.join(self._driver_path, 'include', f'driver.{self._head_ext}')
 
-        with open(filename, 'wt', encoding = 'utf-8') as f:
+        if self._override_main or not os.path.isfile(filename):
 
-            f.write(self.render(
-                template,
-                descr = self._descr
-            ))
+            with open(filename, 'wt', encoding = 'utf-8') as f:
 
-    ####################################################################################################################
-    # src/driver.cpp  (implémentation de Driver)
+                f.write(self.render(
+                    template,
+                    descr = self._descr
+                ))
+
     ####################################################################################################################
 
     def _generate_driver_sources(self) -> None:
@@ -655,13 +653,15 @@ int Driver::nodeTimeoutMS() const
 
         filename = os.path.join(self._driver_path, 'src', f'driver.{self._src_ext}')
 
-        with open(filename, 'wt', encoding = 'utf-8') as f:
+        if self._override_main or not os.path.isfile(filename):
 
-            f.write(self.render(
-                template,
-                descr = self._descr,
-                devices = self._devices
-            ))
+            with open(filename, 'wt', encoding = 'utf-8') as f:
+
+                f.write(self.render(
+                    template,
+                    descr = self._descr,
+                    devices = self._devices
+                ))
 
     ####################################################################################################################
 
