@@ -211,13 +211,13 @@ static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_v
     if(self != {{ null }})
     {
 {%-     if   v.type == 'number' and 'd' in df.format %}
-        int value = nyx_number_def_get_int((nyx_dict_t *) def_vector);
+        int value = (int) nyx_number_def_get((nyx_dict_t *) def_vector);
         self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
 {%-     elif v.type == 'number' and 'l' in df.format %}
-        long value = nyx_number_def_get_long((nyx_dict_t *) def_vector);
+        long value = (long) nyx_number_def_get((nyx_dict_t *) def_vector);
         self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
 {%-     elif v.type == 'number' and 'f' in df.format %}
-        double value = nyx_number_def_get_double((nyx_dict_t *) def_vector);
+        double value = (double) nyx_number_def_get((nyx_dict_t *) def_vector);
         self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
 {%-     elif v.type == 'text' %}
         STR_t value = nyx_text_def_get((nyx_dict_t *) def_vector);
