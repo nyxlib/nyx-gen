@@ -292,6 +292,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     nyx_opts_t {{ v.name|lower }}_opts = {
         .label = {% if (v.label|default('')|trim)|length > 0 %}"{{ v.label|trim }}"{% else %}{{ null }}{% endif %},
         .group = {% if (v.group|default('')|trim)|length > 0 %}"{{ v.group|trim }}"{% else %}{{ null }}{% endif %},
+        .hints = {% if (v.hints|default('')|trim)|length > 0 %}"{{ v.hints|trim }}"{% else %}{{ null }}{% endif %},
         .timeout = {{ v.timeout|default(0, true) }},
         .message = {% if (v.message|default('')|trim)|length > 0 %}"{{ v.message|trim }}"{% else %}{{ null }}{% endif %},
     };

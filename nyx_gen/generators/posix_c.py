@@ -445,10 +445,11 @@ void nyx_glue_initialize()
 {#-     ------------------------------------------------------------------------------------------------------------- #}
 
     nyx_opts_t {{ d.name|lower }}_{{ v.name|lower }}_opts = {
-        .label   = {% if v.label|default(None) is not none %}"{{ v.label }}"{% else %}{{ null }}{% endif %},
-        .group   = {% if v.group|default(None) is not none %}"{{ v.group }}"{% else %}{{ null }}{% endif %},
+        .label = {% if (v.label|default('')|trim)|length > 0 %}"{{ v.label|trim }}"{% else %}{{ null }}{% endif %},
+        .group = {% if (v.group|default('')|trim)|length > 0 %}"{{ v.group|trim }}"{% else %}{{ null }}{% endif %},
+        .hints = {% if (v.hints|default('')|trim)|length > 0 %}"{{ v.hints|trim }}"{% else %}{{ null }}{% endif %},
         .timeout = {% if v.timeout|default(None) is not none %}{{ v.timeout }}{% else %}0{% endif %},
-        .message = {% if v.message|default(None) is not none %}"{{ v.message }}"{% else %}{{ null }}{% endif %},
+        .message = {% if (v.message|default('')|trim)|length > 0 %}"{{ v.message|trim }}"{% else %}{{ null }}{% endif %},
     };
 {#-     ------------------------------------------------------------------------------------------------------------- #}
 {%      if v.type == 'number' %}
