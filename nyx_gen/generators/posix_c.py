@@ -238,7 +238,6 @@ int main()
         REDIS_USERNAME,
         REDIS_PASSWORD,
         3000,
-        true,
         true
     );
 
