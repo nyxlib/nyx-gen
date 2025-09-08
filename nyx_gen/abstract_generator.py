@@ -37,7 +37,10 @@ class AbstractGenerator(abc.ABC):
 
     ####################################################################################################################
 
-    _env = Environment(undefined = StrictUndefined, trim_blocks = False, lstrip_blocks = False, keep_trailing_newline = True, newline_sequence = '\n')
+    _env = Environment(undefined = StrictUndefined, trim_blocks = False, lstrip_blocks = False, keep_trailing_newline = True, newline_sequence = '\n', finalize = (lambda v:
+        (v.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n').replace('\t', '\\t'))
+        if isinstance(v, str) else v
+    ))
 
     ####################################################################################################################
 
