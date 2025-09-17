@@ -407,7 +407,7 @@ void nyx_glue_initialize()
 {%-       elif v.type == 'switch' %}
     vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_switch_def_new("{{ df.name }}", "{{ df.label }}", {{ df.value }});
 {%-       elif v.type == 'blob' %}
-    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_blob_def_new("{{ df.name }}", "{{ df.label }}", {{ df.value }});
+    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_blob_def_new("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.value }});
 {%-       elif v.type == 'stream' %}
     vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_def_new("{{ df.name }}", "{{ df.label }}");
 {%-       endif -%}

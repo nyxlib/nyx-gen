@@ -269,7 +269,7 @@ void Device{{ device.name|pascalcase }}::initialize()
 {%-     elif v.type == 'switch' %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_switch_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, {{ df.value }});
 {%-     elif v.type == 'blob' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_blob_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, {{ df.value }});
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_blob_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.value }});
 {%-     elif v.type == 'stream' %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %});
 {%-     endif %}
