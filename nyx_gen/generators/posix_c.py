@@ -290,11 +290,23 @@ int main()
 {#-     ------------------------------------------------------------------------------------------------------------ -#}
 {%-     set ns.any_callbacks = true -%}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
-
-static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(struct nyx_object_s *def_vector, bool modified)
+{%      if v.type == 'number' %}
+static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
+{%-     elif v.type == 'text' %}
+static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
+{%-     elif v.type == 'light' %}
+static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     elif v.type == 'switch' %}
+static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     endif %}
 {
     /* TO BE IMPLEMENTED */
+
+    return true;
 }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 {#-     ------------------------------------------------------------------------------------------------------------ -#}
 {%-   endfor -%}
 
@@ -303,7 +315,7 @@ static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(struct nyx_object_s
 {%-     set ns.any_callbacks = true -%}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
 
-static void _{{ v.name|lower }}_callback(struct nyx_object_s *vector, bool modified)
+static void _{{ v.name|lower }}_callback(nyx_dict_t *vector)
 {
     /* TO BE IMPLEMENTED */
 }
@@ -325,12 +337,20 @@ void device_{{ device.name|lower }}_initialize()
 {%- for v in device.vectors -%}
 {%-   for df in v.defs if df.callback -%}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     if v.type == 'number' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'text' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'light' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'switch' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     endif -%}
 {#-     ------------------------------------------------------------------------------------------------------------ -#}
 {%-   endfor -%}
 {%-   if v.callback %}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
-    vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback = _{{ v.name|lower }}_callback;
+    vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
 {#      ------------------------------------------------------------------------------------------------------------ -#}
 {%-   endif -%}
 {%- endfor %}
