@@ -42,9 +42,9 @@ def main():
 
             descr = json.load(f)
 
-    except IOError:
+    except IOError as e:
 
-        print('Invalid JSON')
+        print(f'Failed to load JSON: {e.__str__()}')
 
         return 1
 
