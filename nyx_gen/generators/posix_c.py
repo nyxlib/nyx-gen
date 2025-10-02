@@ -290,14 +290,27 @@ int main()
 {#-     ------------------------------------------------------------------------------------------------------------ -#}
 {%-     set ns.any_callbacks = true -%}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
-{%      if v.type == 'number' %}
-static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
+{%      if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-         elif subtype == NYX_NUMBER_UINT %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned int new_value, unsigned int old_value)
+{%-         elif subtype == NYX_NUMBER_LONG %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, long new_value, long old_value)
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned long new_value, unsigned long old_value)
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
+{%-         endif %}
 {%-     elif v.type == 'text' %}
-static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
 {%-     elif v.type == 'light' %}
-static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
 {%-     elif v.type == 'switch' %}
-static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     elif v.type == 'switch' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff)
 {%-     endif %}
 {
     /* TO BE IMPLEMENTED */
@@ -337,14 +350,27 @@ void device_{{ device.name|lower }}_initialize()
 {%- for v in device.vectors -%}
 {%-   for df in v.defs if df.callback -%}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
-{%-     if v.type == 'number' %}
+{%-     if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_UINT %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_LONG %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         endif %}
 {%-     elif v.type == 'text' %}
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-     elif v.type == 'light' %}
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-     elif v.type == 'switch' %}
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'blob' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-     endif -%}
 {#-     ------------------------------------------------------------------------------------------------------------ -#}
 {%-   endfor -%}
@@ -418,8 +444,19 @@ void nyx_glue_initialize()
     /* VECTOR {{ d.name|upper }}::{{ v.name|upper }} */
 {#      ------------------------------------------------------------------------------------------------------------ -#}
 {%-     for df in v.defs -%}
-{%-       if v.type == 'number' %}
-    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-       if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_int("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_UINT %}
+    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_uint("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_LONG %}
+    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_long("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_ulong("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+    vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_double("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         endif %}
 {%-       elif v.type == 'text' %}
     vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_text_def_new("{{ df.name }}", "{{ df.label }}", "{{ df.value }}");
 {%-       elif v.type == 'light' %}

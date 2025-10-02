@@ -2,12 +2,54 @@
 ########################################################################################################################
 
 import os
+import re
 import abc
 import shutil
 import typing
 import argparse
 
 from jinja2 import Environment, StrictUndefined
+
+########################################################################################################################
+
+NYX_NUMBER_INT    = 0
+NYX_NUMBER_UINT   = 1
+NYX_NUMBER_LONG   = 2
+NYX_NUMBER_ULONG  = 3
+NYX_NUMBER_DOUBLE = 4
+
+########################################################################################################################
+
+FORMAT_RE = re.compile(r'%([0-9.*+-]*)?(?P<long>l)?(?P<type>[a-zA-Z])')
+
+########################################################################################################################
+
+def get_number_type(fmt: str) -> int:
+
+    ####################################################################################################################
+
+    m = FORMAT_RE.search(fmt)
+
+    if not m:
+
+        raise ValueError(f'Invalid format: {fmt}')
+
+    ####################################################################################################################
+
+    l = m.group('long') \
+                    is not None
+    t = m.group('type')
+
+    ####################################################################################################################
+
+    if t in ('d', 'i'):
+        return NYX_NUMBER_LONG if l else NYX_NUMBER_INT
+    elif t in ('u', 'o', 'x', 'X'):
+        return NYX_NUMBER_ULONG if l else NYX_NUMBER_UINT
+    elif t in ('f', 'F', 'e', 'E', 'g', 'G', 'a', 'A', 'm'):
+        return NYX_NUMBER_DOUBLE
+    else:
+        raise ValueError(f'Unsupported type specifier: %{t}')
 
 ########################################################################################################################
 
@@ -135,5 +177,13 @@ def detect_generators() -> typing.Dict[str, typing.Type[AbstractGenerator]]:
 ########################################################################################################################
 
 AbstractGenerator._env.filters['pascalcase'] = lambda s: ''.join(part.capitalize() for part in s.split('_') if part)
+
+AbstractGenerator._env.globals['NYX_NUMBER_INT'] = NYX_NUMBER_INT
+AbstractGenerator._env.globals['NYX_NUMBER_UINT'] = NYX_NUMBER_UINT
+AbstractGenerator._env.globals['NYX_NUMBER_LONG'] = NYX_NUMBER_LONG
+AbstractGenerator._env.globals['NYX_NUMBER_ULONG'] = NYX_NUMBER_ULONG
+AbstractGenerator._env.globals['NYX_NUMBER_DOUBLE'] = NYX_NUMBER_DOUBLE
+
+AbstractGenerator._env.globals['get_number_type'] = get_number_type
 
 ########################################################################################################################
