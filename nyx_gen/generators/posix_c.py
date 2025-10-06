@@ -328,7 +328,7 @@ static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector,
 {%-     set ns.any_callbacks = true -%}
 {#-     ------------------------------------------------------------------------------------------------------------- #}
 
-static void _{{ v.name|lower }}_callback(nyx_dict_t *vector)
+static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
 {
     /* TO BE IMPLEMENTED */
 }
