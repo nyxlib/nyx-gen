@@ -30,7 +30,7 @@ def main():
 
     parser.add_argument('--output', type = str, default = '.', help = 'Skeleton output path')
 
-    parser.add_argument('--descr', type = str, required = True, help = 'Driver description file')
+    parser.add_argument('descr', type = str, help = 'Driver description JSON file')
 
     args = parser.parse_args()
 
