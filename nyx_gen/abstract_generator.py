@@ -156,7 +156,7 @@ def detect_generators() -> typing.Dict[str, typing.Type[AbstractGenerator]]:
 
     from .generators.posix_c import PosixCGenerator
     from .generators.posix_cpp import PosixCPPGenerator
-    from .generators.python import PythonGenerator
+    from .generators.gnuradio import GNURadioGenerator
     from .generators.arduino_eth import ArduinoEthGenerator
     from .generators.arduino_wifi import ArduinoWifiGenerator
 
@@ -165,7 +165,7 @@ def detect_generators() -> typing.Dict[str, typing.Type[AbstractGenerator]]:
     result = {
         PosixCGenerator._name: PosixCGenerator,
         PosixCPPGenerator._name: PosixCPPGenerator,
-        PythonGenerator._name: PythonGenerator,
+        GNURadioGenerator._name: GNURadioGenerator,
         ArduinoEthGenerator._name: ArduinoEthGenerator,
         ArduinoWifiGenerator._name: ArduinoWifiGenerator,
     }

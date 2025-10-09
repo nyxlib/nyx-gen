@@ -26,6 +26,7 @@ class PosixCGenerator(AbstractGenerator):
         self._generate_cmake()
         self._generate_header()
         self._generate_main()
+        self._generate_glue()
         self._generate_devices()
 
     ####################################################################################################################
@@ -266,137 +267,8 @@ int main()
 
     ####################################################################################################################
 
-    def _generate_devices(self) -> None:
+    def _generate_glue(self) -> None:
 
-        ################################################################################################################
-        # DEVICES
-        ################################################################################################################
-
-        template = '''
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-#include "autogen/glue.{{ head_ext }}"
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-{%- set ns = namespace(any_callbacks = false) -%}
-
-{%- for v in device.vectors -%}
-{%-   for df in v.defs if df.callback -%}
-{#-     ------------------------------------------------------------------------------------------------------------ -#}
-{%-     set ns.any_callbacks = true -%}
-{#-     ------------------------------------------------------------------------------------------------------------- #}
-{%      if v.type == 'number' -%}
-{%          set subtype = get_number_type(df.format) -%}
-{%-         if subtype == NYX_NUMBER_INT %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
-{%-         elif subtype == NYX_NUMBER_UINT %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned int new_value, unsigned int old_value)
-{%-         elif subtype == NYX_NUMBER_LONG %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, long new_value, long old_value)
-{%-         elif subtype == NYX_NUMBER_ULONG %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned long new_value, unsigned long old_value)
-{%-         elif subtype == NYX_NUMBER_DOUBLE %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
-{%-         endif -%}
-{%-     elif v.type == 'text' %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
-{%-     elif v.type == 'light' %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
-{%-     elif v.type == 'switch' %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
-{%-     elif v.type == 'switch' %}
-static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff)
-{%-     endif %}
-{
-    /* TO BE IMPLEMENTED */
-
-    return true;
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-{%-   endfor -%}
-
-{%-   if v.callback -%}
-{#-     ------------------------------------------------------------------------------------------------------------ -#}
-{%-     set ns.any_callbacks = true -%}
-{#-     ------------------------------------------------------------------------------------------------------------- #}
-
-static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
-{
-    /* TO BE IMPLEMENTED */
-}
-{%-   endif -%}
-{%- endfor -%}
-
-{%- if not ns.any_callbacks %}
-
-/* TO BE IMPLEMENTED */
-{%- endif %}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void device_{{ device.name|lower }}_initialize()
-{
-{%- for v in device.vectors -%}
-{%-   for df in v.defs if df.callback %}
-{%-     if v.type == 'number' -%}
-{%          set subtype = get_number_type(df.format) -%}
-{%-         if subtype == NYX_NUMBER_INT %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_UINT %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_LONG %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_ULONG %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_DOUBLE %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         endif -%}
-{%-     elif v.type == 'text' %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     elif v.type == 'light' %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     elif v.type == 'switch' %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     elif v.type == 'blob' %}
-    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     endif -%}
-{%-   endfor -%}
-{%-   if v.callback %}
-
-    vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
-{%    endif -%}
-{%- endfor %}
-    /* TO BE IMPLEMENTED */
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void device_{{ device.name|lower }}_finalize()
-{
-    /* TO BE IMPLEMENTED */
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-'''[1:]
-
-        for device in self._devices:
-
-            filename = os.path.join(self._driver_path, 'src', f'device_{device["name"].lower()}.{self._src_ext}')
-
-            if self._override_device or not os.path.isfile(filename):
-
-                with open(filename, 'wt', encoding = 'utf-8') as f:
-
-                    f.write(self.render(
-                        template,
-                        device = device
-                    ))
-
-        ################################################################################################################
-        # GLUE                                                                                                         #
         ################################################################################################################
 
         template = '''
@@ -563,5 +435,134 @@ void nyx_glue_finalize()
                 template,
                 devices = self._devices
             ))
+
+    ####################################################################################################################
+
+    def _generate_devices(self) -> None:
+
+        ################################################################################################################
+
+        template = '''
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+#include "autogen/glue.{{ head_ext }}"
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+{%- set ns = namespace(any_callbacks = false) -%}
+
+{%- for v in device.vectors -%}
+{%-   for df in v.defs if df.callback -%}
+{#-     ------------------------------------------------------------------------------------------------------------ -#}
+{%-     set ns.any_callbacks = true -%}
+{#-     ------------------------------------------------------------------------------------------------------------- #}
+{%      if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-         elif subtype == NYX_NUMBER_UINT %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned int new_value, unsigned int old_value)
+{%-         elif subtype == NYX_NUMBER_LONG %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, long new_value, long old_value)
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned long new_value, unsigned long old_value)
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
+{%-         endif -%}
+{%-     elif v.type == 'text' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
+{%-     elif v.type == 'light' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     elif v.type == 'switch' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     elif v.type == 'switch' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff)
+{%-     endif %}
+{
+    /* TO BE IMPLEMENTED */
+
+    return true;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+{%-   endfor -%}
+
+{%-   if v.callback -%}
+{#-     ------------------------------------------------------------------------------------------------------------ -#}
+{%-     set ns.any_callbacks = true -%}
+{#-     ------------------------------------------------------------------------------------------------------------- #}
+
+static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
+{
+    /* TO BE IMPLEMENTED */
+}
+{%-   endif -%}
+{%- endfor -%}
+
+{%- if not ns.any_callbacks %}
+
+/* TO BE IMPLEMENTED */
+{%- endif %}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void device_{{ device.name|lower }}_initialize()
+{
+{%- for v in device.vectors -%}
+{%-   for df in v.defs if df.callback %}
+{%-     if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_UINT %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_LONG %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         endif -%}
+{%-     elif v.type == 'text' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'light' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'switch' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'blob' %}
+    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     endif -%}
+{%-   endfor -%}
+{%-   if v.callback %}
+
+    vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
+{%    endif -%}
+{%- endfor %}
+    /* TO BE IMPLEMENTED */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void device_{{ device.name|lower }}_finalize()
+{
+    /* TO BE IMPLEMENTED */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+'''[1:]
+
+        for device in self._devices:
+
+            filename = os.path.join(self._driver_path, 'src', f'device_{device["name"].lower()}.{self._src_ext}')
+
+            if self._override_device or not os.path.isfile(filename):
+
+                with open(filename, 'wt', encoding = 'utf-8') as f:
+
+                    f.write(self.render(
+                        template,
+                        device = device
+                    ))
 
 ########################################################################################################################
