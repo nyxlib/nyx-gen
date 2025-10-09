@@ -68,7 +68,7 @@ add_executable({{ descr.nodeName|lower }} ${SOURCE_FILES})
 
 target_include_directories({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_INCLUDE_DIR} ./include)
 
-target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' if descr.static else 'SHARED' }}_LIB_PATH})
+target_link_libraries({{ descr.nodeName|lower }} PRIVATE NyxNode::nyx-node-{{ 'static' if descr.static else 'shared' }})
 
 ########################################################################################################################
 '''[1:]
@@ -210,12 +210,11 @@ private:
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* DEF VECTOR CALLBACKS                                                                                               */
 /*--------------------------------------------------------------------------------------------------------------------*/
-{%- for v in device.vectors %}
-{%-   for df in v.defs if df.callback %}
-
+{%- for v in device.vectors -%}
+{%-   for df in v.defs if df.callback -%}
 {%-     if v.type == 'number' -%}
-{%          set subtype = get_number_type(df.format) -%}
-{%-         if subtype == NYX_NUMBER_INT %}
+{%          set subtype = get_number_type(df.format) %}
+{%          if subtype == NYX_NUMBER_INT %}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
 {%-         elif subtype == NYX_NUMBER_UINT %}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned int new_value, unsigned int old_value)
@@ -225,7 +224,7 @@ static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector,
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned long new_value, unsigned long old_value)
 {%-         elif subtype == NYX_NUMBER_DOUBLE %}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
-{%-         endif %}
+{%-         endif -%}
 {%-     elif v.type == 'text' %}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
 {%-     elif v.type == 'switch' %}
@@ -276,11 +275,10 @@ void Device{{ device.name|pascalcase }}::initialize()
     /*----------------------------------------------------------------------------------------------------------------*/
     /* VECTOR {{ device.name|upper }}::{{ v.name|upper }} */
     /*----------------------------------------------------------------------------------------------------------------*/
-{%    for df in v.defs %}
-
+{%-   for df in v.defs -%}
 {%-     if v.type == 'number' -%}
-{%          set subtype = get_number_type(df.format) -%}
-{%-         if subtype == NYX_NUMBER_INT %}
+{%-         set subtype = get_number_type(df.format) %}
+{%          if subtype == NYX_NUMBER_INT %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_int("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_UINT %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_uint("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
@@ -290,7 +288,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_ulong("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_DOUBLE %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_double("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
-{%-         endif %}
+{%-         endif -%}
 {%-     elif v.type == 'text' %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_text_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.value }}");
 {%-     elif v.type == 'light' %}
@@ -302,10 +300,10 @@ void Device{{ device.name|pascalcase }}::initialize()
 {%-     elif v.type == 'stream' %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %});
 {%-     endif %}
-{%-     if df.callback %}
+{%-     if df.callback -%}
 {%-       if v.type == 'number' -%}
-{%            set subtype = get_number_type(df.format) -%}
-{%-           if subtype == NYX_NUMBER_INT %}
+{%-           set subtype = get_number_type(df.format) %}
+{%            if subtype == NYX_NUMBER_INT %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-           elif subtype == NYX_NUMBER_UINT %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;

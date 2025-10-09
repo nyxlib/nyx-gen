@@ -65,7 +65,7 @@ add_executable({{ descr.nodeName|lower }} ${SOURCE_FILES})
 
 target_include_directories({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_INCLUDE_DIR})
 
-target_link_libraries({{ descr.nodeName|lower }} PRIVATE ${NYXNODE_{{ 'STATIC' if descr.static else 'SHARED' }}_LIB_PATH})
+target_link_libraries({{ descr.nodeName|lower }} PRIVATE NyxNode::nyx-node-{{ 'static' if descr.static else 'shared' }})
 
 ########################################################################################################################
 '''[1:]
@@ -298,7 +298,7 @@ static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector,
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned long new_value, unsigned long old_value)
 {%-         elif subtype == NYX_NUMBER_DOUBLE %}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
-{%-         endif %}
+{%-         endif -%}
 {%-     elif v.type == 'text' %}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
 {%-     elif v.type == 'light' %}
@@ -353,7 +353,7 @@ void device_{{ device.name|lower }}_initialize()
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-         elif subtype == NYX_NUMBER_DOUBLE %}
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         endif %}
+{%-         endif -%}
 {%-     elif v.type == 'text' %}
     vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-     elif v.type == 'light' %}
@@ -439,7 +439,7 @@ void nyx_glue_initialize()
     vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_ulong("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_DOUBLE %}
     vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_double("{{ df.name }}", "{{ df.label }}", "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
-{%-         endif %}
+{%-         endif -%}
 {%-       elif v.type == 'text' %}
     vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }} = nyx_text_def_new("{{ df.name }}", "{{ df.label }}", "{{ df.value }}");
 {%-       elif v.type == 'light' %}
