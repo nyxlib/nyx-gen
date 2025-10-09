@@ -128,22 +128,31 @@ public:
 {%  for v in device.vectors -%}
 {%-   for df in v.defs if df.callback %}
 
-{%-     if   v.type == 'number' and 'd' in df.format %}
-    void on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, int value, bool modified);
-{%-     elif v.type == 'number' and 'l' in df.format %}
-    void on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, long value, bool modified);
-{%-     elif v.type == 'number' and 'f' in df.format %}
-    void on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, double value, bool modified);
+{%-     if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, int newValue, int oldValue);
+{%-         elif subtype == NYX_NUMBER_UINT %}
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, unsigned int newValue, unsigned int oldValue);
+{%-         elif subtype == NYX_NUMBER_LONG %}
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, long newValue, long oldValue);
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, unsigned long newValue, unsigned long oldValue);
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, double newValue, double oldValue);
+{%-         endif %}
 {%-     elif v.type == 'text' %}
-    void on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, STR_t value, bool modified);
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, STR_t newValue, STR_t oldValue);
 {%-     elif v.type == 'switch' %}
-    void on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, nyx_onoff_t value, bool modified);
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, int newValue, int oldValue);
 {%-     elif v.type == 'light' %}
-    void on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, nyx_state_t value, bool modified);
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, int newValue, int oldValue);
+{%-     elif v.type == 'blob' %}
+    bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff);
 {%-     endif %}
 {%-   endfor %}
 {%-   if v.callback %}
-    void on{{ v.name|pascalcase }}Changed(nyx_object_t *vector, bool modified);
+    void on{{ v.name|pascalcase }}Changed(nyx_dict_t *vector, bool modified);
 {%-   endif %}
 {% endfor %}
     /*----------------------------------------------------------------------------------------------------------------*/
@@ -204,32 +213,41 @@ private:
 {%- for v in device.vectors %}
 {%-   for df in v.defs if df.callback %}
 
-static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_vector, bool modified)
+{%-     if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-         elif subtype == NYX_NUMBER_UINT %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned int new_value, unsigned int old_value)
+{%-         elif subtype == NYX_NUMBER_LONG %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, long new_value, long old_value)
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, unsigned long new_value, unsigned long old_value)
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, double new_value, double old_value)
+{%-         endif %}
+{%-     elif v.type == 'text' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, STR_t new_value, STR_t old_value)
+{%-     elif v.type == 'switch' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     elif v.type == 'light' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, int new_value, int old_value)
+{%-     elif v.type == 'blob' %}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff)
+{%-     endif %}
 {
-    Device{{ device.name|pascalcase }} *self = (Device{{ device.name|pascalcase }} *) def_vector->ctx;
+    Device{{ device.name|pascalcase }} *self = (Device{{ device.name|pascalcase }} *) vector->base.ctx;
 
     if(self != {{ null }})
     {
-{%-     if   v.type == 'number' and 'd' in df.format %}
-        int value = (int) nyx_number_def_get((nyx_dict_t *) def_vector);
-        self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
-{%-     elif v.type == 'number' and 'l' in df.format %}
-        long value = (long) nyx_number_def_get((nyx_dict_t *) def_vector);
-        self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
-{%-     elif v.type == 'number' and 'f' in df.format %}
-        double value = (double) nyx_number_def_get((nyx_dict_t *) def_vector);
-        self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
-{%-     elif v.type == 'text' %}
-        STR_t value = nyx_text_def_get((nyx_dict_t *) def_vector);
-        self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
-{%-     elif v.type == 'switch' %}
-        nyx_onoff_t value = nyx_switch_def_get((nyx_dict_t *) def_vector);
-        self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
-{%-     elif v.type == 'light' %}
-        nyx_state_t value = nyx_light_def_get((nyx_dict_t *) def_vector);
-        self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(def_vector, value, modified);
+{%-     if v.type == 'blob' %}
+        return self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(vector, def, size, buff);
+{%-     else %}
+        return self->on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(vector, def, new_value, old_value);
 {%-     endif %}
     }
+
+    return true;
 }
 {%-   endfor %}
 {%- endfor %}
@@ -239,9 +257,9 @@ static void _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_object_t *def_v
 /*--------------------------------------------------------------------------------------------------------------------*/
 {%- for v in device.vectors if v.callback %}
 
-static void _{{ v.name|lower }}_callback(nyx_object_t *vector, bool modified)
+static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
 {
-    Device{{ device.name|pascalcase }} *self = (Device{{ device.name|pascalcase }} *) vector->ctx;
+    Device{{ device.name|pascalcase }} *self = (Device{{ device.name|pascalcase }} *) vector->base.ctx;
 
     if(self != {{ null }})
     {
@@ -260,8 +278,19 @@ void Device{{ device.name|pascalcase }}::initialize()
     /*----------------------------------------------------------------------------------------------------------------*/
 {%    for df in v.defs %}
 
-{%-     if v.type == 'number' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-     if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_int("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_UINT %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_uint("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_LONG %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_long("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_ulong("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_double("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+{%-         endif %}
 {%-     elif v.type == 'text' %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_text_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.value }}");
 {%-     elif v.type == 'light' %}
@@ -274,7 +303,28 @@ void Device{{ device.name|pascalcase }}::initialize()
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %});
 {%-     endif %}
 {%-     if df.callback %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-       if v.type == 'number' -%}
+{%            set subtype = get_number_type(df.format) -%}
+{%-           if subtype == NYX_NUMBER_INT %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-           elif subtype == NYX_NUMBER_UINT %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-           elif subtype == NYX_NUMBER_LONG %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-           elif subtype == NYX_NUMBER_ULONG %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-           elif subtype == NYX_NUMBER_DOUBLE %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-           endif %}
+{%-       elif v.type == 'text' %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-       elif v.type == 'light' %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-       elif v.type == 'switch' %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-       elif v.type == 'blob' %}
+    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-       endif -%}
 {%-     endif %}
     this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.ctx = (void *) this;
 {%    endfor %}
@@ -290,11 +340,11 @@ void Device{{ device.name|pascalcase }}::initialize()
     /*----------------------------------------------------------------------------------------------------------------*/
 
     nyx_opts_t {{ v.name|lower }}_opts = {
-        .label = {% if (v.label|default('')|trim)|length > 0 %}"{{ v.label|trim }}"{% else %}{{ null }}{% endif %},
         .group = {% if (v.group|default('')|trim)|length > 0 %}"{{ v.group|trim }}"{% else %}{{ null }}{% endif %},
+        .label = {% if (v.label|default('')|trim)|length > 0 %}"{{ v.label|trim }}"{% else %}{{ null }}{% endif %},
         .hints = {% if (v.hints|default('')|trim)|length > 0 %}"{{ v.hints|trim }}"{% else %}{{ null }}{% endif %},
-        .timeout = {{ v.timeout|default(0, true) }},
         .message = {% if (v.message|default('')|trim)|length > 0 %}"{{ v.message|trim }}"{% else %}{{ null }}{% endif %},
+        .timeout = {{ v.timeout|default(0, true) }},
     };
 
     /*----------------------------------------------------------------------------------------------------------------*/
@@ -353,7 +403,7 @@ void Device{{ device.name|pascalcase }}::initialize()
     );
 {%   endif %}
 {%- if v.callback %}
-    this->vector_{{ v.name|lower }}->base.in_callback = _{{ v.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
 {%-  endif %}
 {%- if device.disabled|default(false) or v.disabled|default(false) %}
     this->vector_{{ v.name|lower }}->base.flags |= NYX_FLAGS_DISABLED;
@@ -428,28 +478,39 @@ Device{{ device.name|pascalcase }}::~Device{{ device.name|pascalcase }}()
 /*--------------------------------------------------------------------------------------------------------------------*/
 {%- for v in device.vectors -%}
 {%-   for df in v.defs if df.callback %}
-{%      if   v.type == 'number' and 'd' in df.format %}
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, int value, bool modified)
-{%-     elif v.type == 'number' and 'l' in df.format %}
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, long value, bool modified)
-{%-     elif v.type == 'number' and 'f' in df.format %}
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, double value, bool modified)
-{%-     elif v.type == 'text' %}
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, STR_t value, bool modified)
-{%-     elif v.type == 'switch' %}
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, nyx_onoff_t value, bool modified)
-{%-     elif v.type == 'light' %}
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_object_t *def_vector, nyx_state_t value, bool modified)
-{%-     endif %}
+{%      if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if subtype == NYX_NUMBER_INT %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, int newValue, int oldValue)
+{%-         elif subtype == NYX_NUMBER_UINT %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, unsigned int newValue, unsigned int oldValue)
+{%-         elif subtype == NYX_NUMBER_LONG %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, long newValue, long oldValue)
+{%-         elif subtype == NYX_NUMBER_ULONG %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, unsigned long newValue, unsigned long oldValue)
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, double newValue, double oldValue)
+{%-         endif %}
+{%      elif v.type == 'text' %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, STR_t newValue, STR_t oldValue)
+{%      elif v.type == 'switch' %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, int newValue, int oldValue)
+{%      elif v.type == 'light' %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, int newValue, int oldValue)
+{%      elif v.type == 'blob' %}
+bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff)
+{%      endif %}
 {
     /* TO BE IMPLEMENTED */
+
+    return true;
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 {%-   endfor -%}
 {%-   if v.callback %}
 
-void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}Changed(nyx_object_t *vector, bool modified)
+void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}Changed(nyx_dict_t *vector, bool modified)
 {
     /* TO BE IMPLEMENTED */
 }
