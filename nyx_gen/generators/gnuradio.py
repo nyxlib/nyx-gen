@@ -149,8 +149,8 @@ install(TARGETS {{ descr.nodeName|lower }} LIBRARY DESTINATION ${Python3_SITEARC
 
 install(FILES ./src/__init__.py DESTINATION ${Python3_SITEARCH}/gnuradio/nyx_{{ descr.nodeName|lower }}/)
 
-install(FILES ./grc/nyx_{{ descr.nodeName|lower }}.block.yml             DESTINATION ${CMAKE_INSTALL_DATADIR}/gnuradio/grc/blocks/)
-install(FILES ./grc/nyx_{{ descr.nodeName|lower }}_sink.block.yml        DESTINATION ${CMAKE_INSTALL_DATADIR}/gnuradio/grc/blocks/)
+install(FILES ./grc/nyx_{{ descr.nodeName|lower }}.block.yml DESTINATION ${CMAKE_INSTALL_DATADIR}/gnuradio/grc/blocks/)
+install(FILES ./grc/nyx_{{ descr.nodeName|lower }}_sink.block.yml DESTINATION ${CMAKE_INSTALL_DATADIR}/gnuradio/grc/blocks/)
 
 ########################################################################################################################
 '''[1:]
@@ -168,400 +168,6 @@ install(FILES ./grc/nyx_{{ descr.nodeName|lower }}_sink.block.yml        DESTINA
 
     ####################################################################################################################
 
-        ####################################################################################################################
-
-        def _generate_main(self) -> None:
-
-            template = '''
-    #define MQTT_USERNAME {% if descr.enableMQTT %}"{{ descr.mqttUsername }}"{% else %}{{ null }}{% endif %}
-    #define MQTT_PASSWORD {% if descr.enableMQTT %}"{{ descr.mqttPassword }}"{% else %}{{ null }}{% endif %}
-    #define REDIS_USERNAME {% if descr.enableRedis %}"{{ descr.redisUsername }}"{% else %}{{ null }}{% endif %}
-    #define REDIS_PASSWORD {% if descr.enableRedis %}"{{ descr.redisPassword }}"{% else %}{{ null }}{% endif %}
-    '''[1:]
-
-            filename = os.path.join(self._driver_path, 'src', f'credentials.{self._head_ext}')
-
-            with open(filename, 'wt', encoding='utf-8') as f:
-                f.write(self.render(template))
-
-            template = r'''
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    #include "autogen/glue.{{ head_ext }}"
-    #include "credentials.{{ head_ext }}"
-    #include <string.h>
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    __NULLABLE__ str_t nyx_string_dup(__NULLABLE__ STR_t s);
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static char mqtt_url[1024];
-    static char mqtt_username[1024];
-    static char mqtt_password[1024];
-    static char redis_url[1024];
-    static char redis_username[1024];
-    static char redis_password[1024];
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static nyx_node_t *node = NULL;
-    static pthread_t    worker_thread = 0;
-    volatile bool       worker_alive  = false;
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-    {%  for d in devices -%}
-    {%-   for v in d.vectors -%}
-    {%-     for df in v.defs if df.callback %}
-    PyObject *vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
-    {%-     endfor -%}
-    {%-   endfor -%}
-    {%- endfor %}
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static void *worker_routine(void *arg)
-    {
-        nyx_set_log_level(NYX_LOG_LEVEL_INFO);
-        nyx_memory_initialize();
-        nyx_glue_initialize();
-
-        nyx_dict_t *vector_list[] = {
-    {%- for d in devices -%}
-    {%-   for v in d.vectors %}
-            vector_{{ d.name|lower }}_{{ v.name|lower }},
-    {%-   endfor -%}
-    {%- endfor %}
-            {{ null }},
-        };
-
-        node = nyx_node_initialize(
-            "{{ descr.nodeName }}",
-            vector_list,
-            {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %},
-            mqtt_url,
-            mqtt_username,
-            mqtt_password,
-            {{ null }},
-            redis_url,
-            redis_username,
-            redis_password,
-            3000,
-            true
-        );
-
-        for(worker_alive = true; worker_alive;)
-        {
-            nyx_node_poll(node, {{ descr.nodeTimeout }});
-        }
-
-        nyx_node_finalize(node, true);
-        nyx_glue_finalize();
-        nyx_memory_finalize();
-
-        return NULL;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static PyObject *worker_start(PyObject *self, PyObject *args)
-    {
-        if(worker_thread == 0)
-        {
-            STR_t py_mqtt_url       = NULL;
-            STR_t py_mqtt_username  = NULL;
-            STR_t py_mqtt_password  = NULL;
-            STR_t py_redis_url      = NULL;
-            STR_t py_redis_username = NULL;
-            STR_t py_redis_password = NULL;
-
-            if(!PyArg_ParseTuple(args, "|zzzzzz",
-                &py_mqtt_url,
-                &py_mqtt_username,
-                &py_mqtt_password,
-                &py_redis_url,
-                &py_redis_username,
-                &py_redis_password
-            )) {
-                return NULL;
-            }
-
-            strcpy(mqtt_url,       py_mqtt_url       ? py_mqtt_url       : "");
-            strcpy(mqtt_username,  py_mqtt_username  ? py_mqtt_username  : "");
-            strcpy(mqtt_password,  py_mqtt_password  ? py_mqtt_password  : "");
-            strcpy(redis_url,      py_redis_url      ? py_redis_url      : "");
-            strcpy(redis_username, py_redis_username ? py_redis_username : "");
-            strcpy(redis_password, py_redis_password ? py_redis_password : "");
-
-            if(pthread_create(&worker_thread, NULL, worker_routine, NULL) != 0x00)
-            {
-                PyErr_SetString(PyExc_RuntimeError, "Failed to start Nyx worker thread");
-                worker_alive = false;
-                return NULL;
-            }
-            else
-            {
-                worker_alive = true;
-                Py_RETURN_NONE;
-            }
-        }
-
-        Py_RETURN_NONE;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static PyObject *worker_stop(PyObject *self, PyObject *noargs)
-    {
-        if(worker_thread != 0)
-        {
-            worker_alive = false;
-
-            if(pthread_join(worker_thread, NULL) != 0x00)
-            {
-                PyErr_SetString(PyExc_RuntimeError, "Failed to stop Nyx worker thread");
-                worker_thread = 0;
-                return NULL;
-            }
-            else
-            {
-                worker_thread = 0;
-                Py_RETURN_NONE;
-            }
-        }
-
-        Py_RETURN_NONE;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static PyObject *send_message(PyObject *self, PyObject *args)
-    {
-        if(node != NULL)
-        {
-            STR_t device;
-            STR_t message;
-
-            if(!PyArg_ParseTuple(args, "ss", &device, &message))
-            {
-                return NULL;
-            }
-
-            nyx_node_send_message(node, device, message);
-        }
-
-        Py_RETURN_NONE;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static nyx_dict_t *resolve_stream_vector(STR_t device_name, STR_t stream_name)
-    {
-    {%- set first = true -%}
-    {%- for d in devices -%}
-    {%-   for v in d.vectors if v.type == 'stream' -%}
-    {%-     if first %}{% set first = false %}    if{% else %}    else if{% endif %}(strcmp(device_name, "{{ d.name }}") == 0 && strcmp(stream_name, "{{ v.name }}") == 0) { return vector_{{ d.name|lower }}_{{ v.name|lower }}; }
-    {%-   endfor -%}
-    {%- endfor %}
-        return NULL;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-
-    static PyObject *stream_pub(PyObject *self, PyObject *args)
-    {
-        if(node != NULL)
-        {
-            STR_t device_name;
-            STR_t stream_name;
-            Py_ssize_t max_len;
-            PyObject *field_dict;
-
-            if(!PyArg_ParseTuple(args, "ssnO!", &device_name, &stream_name, &max_len, &PyDict_Type, &field_dict))
-            {
-                return NULL;
-            }
-
-            nyx_dict_t *vector = resolve_stream_vector(device_name, stream_name);
-            if(vector == NULL)
-            {
-                PyErr_SetString(PyExc_ValueError, "Unknown device/stream");
-                return NULL;
-            }
-
-            Py_ssize_t n_fields = PyDict_Size(field_dict);
-
-            str_t  *names = nyx_memory_alloc(n_fields * sizeof(str_t ));
-            size_t *sizes = nyx_memory_alloc(n_fields * sizeof(size_t));
-            buff_t *buffs = nyx_memory_alloc(n_fields * sizeof(buff_t));
-
-            if(names == NULL || sizes == NULL || buffs == NULL)
-            {
-                nyx_memory_free(names);
-                nyx_memory_free(sizes);
-                nyx_memory_free(buffs);
-                PyErr_NoMemory();
-                return NULL;
-            }
-
-            PyObject *keys = PyDict_Keys(field_dict);
-
-            for(Py_ssize_t i = 0; i < n_fields; i++)
-            {
-                PyObject *key = PyList_GetItem(keys, i);
-                PyObject *val = PyDict_GetItem(field_dict, key);
-
-                if(!PyUnicode_Check(key) || !PyBytes_Check(val))
-                {
-                    PyErr_SetString(PyExc_TypeError, "Each field must be {name: bytes}");
-                    nyx_memory_free(names);
-                    nyx_memory_free(sizes);
-                    nyx_memory_free(buffs);
-                    return NULL;
-                }
-
-                names[i] = (str_t) PyUnicode_AsUTF8(key);
-                sizes[i] = (size_t) PyBytes_Size(val);
-                buffs[i] = (buff_t) PyBytes_AsString(val);
-            }
-
-            nyx_stream_pub(vector, (size_t) max_len, (size_t) n_fields, names, sizes, buffs);
-
-            nyx_memory_free(names);
-            nyx_memory_free(sizes);
-            nyx_memory_free(buffs);
-        }
-
-        Py_RETURN_NONE;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-    {%  set py_methods = [] %}
-    {%  for d in devices -%}
-    {%-   for v in d.vectors -%}
-    {%-     for df in v.defs %}
-    {%      set ctype = None %}{% set pfmt = '' %}{% set setter = '' %}
-    {%      set subtype = (v.type == 'number') and get_number_type(df.format) or None %}
-    {%      if v.type == 'number' %}
-    {%          if   subtype == NYX_NUMBER_INT    %}{% set ctype = 'int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-    {%          elif subtype == NYX_NUMBER_UINT   %}{% set ctype = 'unsigned int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-    {%          elif subtype == NYX_NUMBER_LONG  %}{% set ctype = 'long' %}{% set pfmt = 'l' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-    {%          elif subtype == NYX_NUMBER_ULONG %}{% set ctype = 'unsigned long' %}{% set pfmt = 'l' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-    {%          elif subtype == NYX_NUMBER_DOUBLE %}{% set ctype = 'double' %}{% set pfmt = 'd' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-    {%          endif %}
-    {%      elif v.type == 'text'   %}
-    {%          set ctype = 'STR_t' %}{% set pfmt = 's' %}{% set setter = 'nyx_text_def_set((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', value);' %}
-    {%      elif v.type == 'switch' %}
-    {%          set ctype = 'int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_switch_def_set((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', value);' %}
-    {%      elif v.type == 'light'  %}
-    {%          set ctype = 'int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_light_def_set((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', value);' %}
-    {%      endif %}
-
-    {%      if df.callback %}
-    static PyObject *_register_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_callback(PyObject *self, PyObject *args)
-    {
-        Py_XDECREF(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
-
-        if(!PyArg_ParseTuple(args, "O", &vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
-        {
-            return NULL;
-        }
-
-        if(!PyCallable_Check(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
-        {
-            PyErr_SetString(PyExc_TypeError, "Parameter must be callable");
-            vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
-            return NULL;
-        }
-
-        Py_XINCREF(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
-
-        Py_RETURN_NONE;
-    }
-    {%      set _ = py_methods.append('{"register_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_callback", _register_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_callback, METH_VARARGS, "Registers the callback for ' ~ d.name ~ '::' ~ v.name ~ '::' ~ df.name ~ '"},') %}
-    {%      endif %}
-
-    {%      if ctype is not none %}
-    static PyObject *_set_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_value(PyObject *self, PyObject *args)
-    {
-        if(worker_alive)
-        {
-            {{ ctype }} value;
-            if(!PyArg_ParseTuple(args, "{{ pfmt }}", &value))
-            {
-                return NULL;
-            }
-            {{ setter }}
-        }
-        Py_RETURN_NONE;
-    }
-    {%      set _ = py_methods.append('{"set_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_value", _set_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_value, METH_VARARGS, "Sets the value for ' ~ d.name ~ '::' ~ v.name ~ '::' ~ df.name ~ '"},') %}
-    {%      endif %}
-
-    {%-     endfor -%}
-    {%-   endfor -%}
-    {%- endfor %}
-
-    static PyMethodDef MethodDefs[] = {
-    {%  for m in py_methods %}
-        {{ m }}
-    {%  endfor %}
-        {"send_message", send_message, METH_VARARGS, "Send a message to a device."},
-        {"stream_pub",  stream_pub,  METH_VARARGS, "Publishes an entry to a stream."},
-        {"start",       worker_start, METH_VARARGS, "Starts the node."},
-        {"stop",        worker_stop,  METH_NOARGS,  "Stops the node."},
-        {NULL, NULL, 0, NULL},
-    };
-
-    static void ModuleFree(void *module)
-    {
-        worker_stop(NULL, NULL);
-    }
-
-    static struct PyModuleDef ModuleDef = {
-        PyModuleDef_HEAD_INIT,
-        "{{ descr.nodeName }}",
-        NULL,
-        -1,
-        MethodDefs,
-        NULL,
-        NULL,
-        NULL,
-        ModuleFree
-    };
-
-    PyMODINIT_FUNC PyInit_{{ descr.nodeName }}()
-    {
-        PyObject *module = PyModule_Create(&ModuleDef);
-
-        if(module != NULL)
-        {
-            PyModule_AddIntConstant(module, "NYX_STATE_IDLE",  NYX_STATE_IDLE);
-            PyModule_AddIntConstant(module, "NYX_STATE_OK",    NYX_STATE_OK);
-            PyModule_AddIntConstant(module, "NYX_STATE_BUSY",  NYX_STATE_BUSY);
-            PyModule_AddIntConstant(module, "NYX_STATE_ALERT", NYX_STATE_ALERT);
-            PyModule_AddIntConstant(module, "NYX_ONOFF_ON",  NYX_ONOFF_ON);
-            PyModule_AddIntConstant(module, "NYX_ONOFF_OFF", NYX_ONOFF_OFF);
-        }
-
-        return module;
-    }
-
-    /*--------------------------------------------------------------------------------------------------------------------*/
-    '''[1:]
-
-            filename = os.path.join(self._driver_path, 'src', f'main.{self._src_ext}')
-
-            if self._override_main or not os.path.isfile(filename):
-                with open(filename, 'wt', encoding='utf-8') as f:
-                    f.write(self.render(
-                        template,
-                        devices=self._devices
-                    ))
-
-    ####################################################################################################################
-
     def _generate_main(self) -> None:
 
         template = '''
@@ -573,20 +179,21 @@ install(FILES ./grc/nyx_{{ descr.nodeName|lower }}_sink.block.yml        DESTINA
 
         filename = os.path.join(self._driver_path, 'src', f'credentials.{self._head_ext}')
 
-        with open(filename, 'wt', encoding = 'utf-8') as f:
+        with open(filename, 'wt', encoding='utf-8') as f:
 
             f.write(self.render(template))
 
         template = r'''
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-#include "autogen/glue.{{ head_ext }}"
-#include "credentials.{{ head_ext }}"
 #include <string.h>
 
-/*--------------------------------------------------------------------------------------------------------------------*/
+#include "autogen/glue.{{ head_ext }}"
+#include "credentials.{{ head_ext }}"
 
-__NULLABLE__ str_t nyx_string_dup(__NULLABLE__ STR_t s);
+__NULLABLE__ str_t nyx_string_dup(
+    __NULLABLE__ STR_t s
+);
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -600,25 +207,30 @@ static char redis_password[1024];
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 static nyx_node_t *node = NULL;
-static pthread_t    worker_thread = 0;
-volatile bool       worker_alive  = false;
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-{%  for d in devices -%}
-{%-   for v in d.vectors -%}
-{%-     for df in v.defs if df.callback %}
-PyObject *vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
-{%-     endfor -%}
-{%-   endfor -%}
-{%- endfor %}
+
+static pthread_t worker_thread = 0;
+
+/*--*/ volatile bool worker_alive = false;
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 static void *worker_routine(void *arg)
 {
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     nyx_set_log_level(NYX_LOG_LEVEL_INFO);
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     nyx_memory_initialize();
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     nyx_glue_initialize();
+
+    /*----------------------------------------------------------------------------------------------------------------*/
 
     nyx_dict_t *vector_list[] = {
 {%- for d in devices -%}
@@ -628,6 +240,8 @@ static void *worker_routine(void *arg)
 {%- endfor %}
         {{ null }},
     };
+
+    /*----------------------------------------------------------------------------------------------------------------*/
 
     node = nyx_node_initialize(
         "{{ descr.nodeName }}",
@@ -650,8 +264,16 @@ static void *worker_routine(void *arg)
     }
 
     nyx_node_finalize(node, true);
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     nyx_glue_finalize();
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
     nyx_memory_finalize();
+
+    /*----------------------------------------------------------------------------------------------------------------*/
 
     return NULL;
 }
@@ -662,6 +284,8 @@ static PyObject *worker_start(PyObject *self, PyObject *args)
 {
     if(worker_thread == 0)
     {
+        /*------------------------------------------------------------------------------------------------------------*/
+
         STR_t py_mqtt_url       = NULL;
         STR_t py_mqtt_username  = NULL;
         STR_t py_mqtt_password  = NULL;
@@ -687,17 +311,24 @@ static PyObject *worker_start(PyObject *self, PyObject *args)
         strcpy(redis_username, py_redis_username ? py_redis_username : "");
         strcpy(redis_password, py_redis_password ? py_redis_password : "");
 
+        /*------------------------------------------------------------------------------------------------------------*/
+
         if(pthread_create(&worker_thread, NULL, worker_routine, NULL) != 0x00)
         {
             PyErr_SetString(PyExc_RuntimeError, "Failed to start Nyx worker thread");
+
             worker_alive = false;
+
             return NULL;
         }
         else
         {
             worker_alive = true;
+
             Py_RETURN_NONE;
         }
+
+        /*------------------------------------------------------------------------------------------------------------*/
     }
 
     Py_RETURN_NONE;
@@ -714,12 +345,15 @@ static PyObject *worker_stop(PyObject *self, PyObject *noargs)
         if(pthread_join(worker_thread, NULL) != 0x00)
         {
             PyErr_SetString(PyExc_RuntimeError, "Failed to stop Nyx worker thread");
+
             worker_thread = 0;
+
             return NULL;
         }
         else
         {
             worker_thread = 0;
+
             Py_RETURN_NONE;
         }
     }
@@ -751,12 +385,14 @@ static PyObject *send_message(PyObject *self, PyObject *args)
 
 static nyx_dict_t *resolve_stream_vector(STR_t device_name, STR_t stream_name)
 {
-{%- set first = true -%}
 {%- for d in devices -%}
-{%-   for v in d.vectors if v.type == 'stream' -%}
-{%-     if first %}{% set first = false %}    if{% else %}    else if{% endif %}(strcmp(device_name, "{{ d.name }}") == 0 && strcmp(stream_name, "{{ v.name }}") == 0) { return vector_{{ d.name|lower }}_{{ v.name|lower }}; }
+{%-   for v in d.vectors if v.type == 'stream' %}
+    if(strcmp(device_name, "{{ d.name }}") == 0 && strcmp(stream_name, "{{ v.name }}") == 0) {
+        return vector_{{ d.name|lower }}_{{ v.name|lower }};
+    }
 {%-   endfor -%}
 {%- endfor %}
+
     return NULL;
 }
 
@@ -766,6 +402,8 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 {
     if(node != NULL)
     {
+        /*------------------------------------------------------------------------------------------------------------*/
+
         STR_t device_name;
         STR_t stream_name;
         Py_ssize_t max_len;
@@ -776,12 +414,17 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
             return NULL;
         }
 
+        /*------------------------------------------------------------------------------------------------------------*/
+
         nyx_dict_t *vector = resolve_stream_vector(device_name, stream_name);
+
         if(vector == NULL)
         {
-            PyErr_SetString(PyExc_ValueError, "Unknown device/stream");
+            PyErr_SetString(PyExc_ValueError, "Unknown device / stream");
             return NULL;
         }
+
+        /*------------------------------------------------------------------------------------------------------------*/
 
         Py_ssize_t n_fields = PyDict_Size(field_dict);
 
@@ -794,9 +437,12 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
             nyx_memory_free(names);
             nyx_memory_free(sizes);
             nyx_memory_free(buffs);
+
             PyErr_NoMemory();
             return NULL;
         }
+
+        /*------------------------------------------------------------------------------------------------------------*/
 
         PyObject *keys = PyDict_Keys(field_dict);
 
@@ -807,10 +453,11 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 
             if(!PyUnicode_Check(key) || !PyBytes_Check(val))
             {
-                PyErr_SetString(PyExc_TypeError, "Each field must be {name: bytes}");
                 nyx_memory_free(names);
                 nyx_memory_free(sizes);
                 nyx_memory_free(buffs);
+
+                PyErr_SetString(PyExc_TypeError, "Each field must be {name: bytes}");
                 return NULL;
             }
 
@@ -819,39 +466,62 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
             buffs[i] = (buff_t) PyBytes_AsString(val);
         }
 
-        nyx_stream_pub(vector, (size_t) max_len, (size_t) n_fields, names, sizes, buffs);
+        /*------------------------------------------------------------------------------------------------------------*/
+
+        if(!nyx_stream_pub(vector, (size_t) max_len, (size_t) n_fields, names, sizes, buffs))
+        {    
+            nyx_memory_free(names);
+            nyx_memory_free(sizes);
+            nyx_memory_free(buffs);
+
+            PyErr_SetString(PyExc_TypeError, "Cannot publish stream");
+            return NULL;
+        }
+
+        /*------------------------------------------------------------------------------------------------------------*/
 
         nyx_memory_free(names);
         nyx_memory_free(sizes);
         nyx_memory_free(buffs);
+
+        Py_RETURN_NONE;
+
+        /*------------------------------------------------------------------------------------------------------------*/
     }
 
     Py_RETURN_NONE;
 }
 
-/*--------------------------------------------------------------------------------------------------------------------*/
-{%  set py_methods = [] %}
-{%  for d in devices -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%- set py_methods = [] -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%- for d in devices -%}
 {%-   for v in d.vectors -%}
-{%-     for df in v.defs %}
-{%      set ctype = None %}{% set pfmt = '' %}{% set setter = '' %}
-{%      set subtype = (v.type == 'number') and get_number_type(df.format) or None %}
-{%      if v.type == 'number' %}
-{%          if   subtype == NYX_NUMBER_INT    %}{% set ctype = 'int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-{%          elif subtype == NYX_NUMBER_UINT   %}{% set ctype = 'unsigned int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-{%          elif subtype == NYX_NUMBER_LONG  %}{% set ctype = 'long' %}{% set pfmt = 'l' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-{%          elif subtype == NYX_NUMBER_ULONG %}{% set ctype = 'unsigned long' %}{% set pfmt = 'l' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-{%          elif subtype == NYX_NUMBER_DOUBLE %}{% set ctype = 'double' %}{% set pfmt = 'd' %}{% set setter = 'nyx_number_def_set_double((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', (double) value);' %}
-{%          endif %}
-{%      elif v.type == 'text'   %}
-{%          set ctype = 'STR_t' %}{% set pfmt = 's' %}{% set setter = 'nyx_text_def_set((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', value);' %}
-{%      elif v.type == 'switch' %}
-{%          set ctype = 'int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_switch_def_set((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', value);' %}
-{%      elif v.type == 'light'  %}
-{%          set ctype = 'int' %}{% set pfmt = 'i' %}{% set setter = 'nyx_light_def_set((nyx_dict_t *) vector_def_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ ', value);' %}
-{%      endif %}
+{%-     for df in v.defs -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%-       set ctype = '' -%}
+{%-       set suffix = '' -%}
+{%-       set pfmt  = '' -%}
+{%-       if v.type == 'number' -%}
+{%-         set subtype = get_number_type(df.format) -%}
+{%-         if   subtype == NYX_NUMBER_INT    -%}{%- set ctype = 'int'           -%}{%- set suffix = 'int' %}{%- set pfmt = 'i' -%}
+{%-         elif subtype == NYX_NUMBER_UINT   -%}{%- set ctype = 'unsigned int'  -%}{%- set suffix = 'uint' %}{%- set pfmt = 'i' -%}
+{%-         elif subtype == NYX_NUMBER_LONG   -%}{%- set ctype = 'long'          -%}{%- set suffix = 'long' %}{%- set pfmt = 'l' -%}
+{%-         elif subtype == NYX_NUMBER_ULONG  -%}{%- set ctype = 'unsigned long' -%}{%- set suffix = 'ulong' %}{%- set pfmt = 'l' -%}
+{%-         elif subtype == NYX_NUMBER_DOUBLE -%}{%- set ctype = 'double'        -%}{%- set suffix = 'double' %}{%- set pfmt = 'd' -%}
+{%-         endif -%}
+{%-       elif v.type == 'text'   -%}{%- set ctype = 'STR_t' -%}{%- set suffix = '' -%}{%- set pfmt = 's' -%}
+{%-       elif v.type == 'switch' -%}{%- set ctype = 'int'   -%}{%- set suffix = '' -%}{%- set pfmt = 'i' -%}
+{%-       elif v.type == 'light'  -%}{%- set ctype = 'int'   -%}{%- set suffix = '' -%}{%- set pfmt = 'i' -%}
+{%-       endif -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%-       if ctype -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%-         if df.callback -%}
+/*--------------------------------------------------------------------------------------------------------------------*/
 
-{%      if df.callback %}
+PyObject *vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
+
 static PyObject *_register_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_callback(PyObject *self, PyObject *args)
 {
     Py_XDECREF(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
@@ -862,9 +532,11 @@ static PyObject *_register_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lowe
     }
 
     if(!PyCallable_Check(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
-    {
-        PyErr_SetString(PyExc_TypeError, "Parameter must be callable");
+    {        
         vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
+     
+        PyErr_SetString(PyExc_TypeError, "Parameter must be callable");
+
         return NULL;
     }
 
@@ -872,45 +544,65 @@ static PyObject *_register_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lowe
 
     Py_RETURN_NONE;
 }
-{%      set _ = py_methods.append('{"register_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_callback", _register_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_callback, METH_VARARGS, "Registers the callback for ' ~ d.name ~ '::' ~ v.name ~ '::' ~ df.name ~ '"},') %}
-{%      endif %}
 
-{%      if ctype is not none %}
+{# -------------------------------------------------------------------------------------------------------------------#}
+{%-           set _ = py_methods.append('{"register_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_callback", _register_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_callback, METH_VARARGS, "Registers the callback for ' ~ d.name ~ '::' ~ v.name ~ '::' ~ df.name ~ '"},') -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%-         endif -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
 static PyObject *_set_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_value(PyObject *self, PyObject *args)
 {
     if(worker_alive)
     {
         {{ ctype }} value;
+
         if(!PyArg_ParseTuple(args, "{{ pfmt }}", &value))
         {
             return NULL;
         }
-        {{ setter }}
+{%          if v.type == 'number' %}
+        nyx_number_def_set_{{ suffix }}((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+{%-         elif v.type == 'text' %}
+        nyx_text_def_set((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+{%-         elif v.type == 'switch' %}
+        nyx_switch_def_set((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+{%-         elif v.type == 'light' %}
+        nyx_light_def_set((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+{%-         endif %}
     }
+
     Py_RETURN_NONE;
 }
-{%      set _ = py_methods.append('{"set_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_value", _set_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_value, METH_VARARGS, "Sets the value for ' ~ d.name ~ '::' ~ v.name ~ '::' ~ df.name ~ '"},') %}
-{%      endif %}
 
+{# -------------------------------------------------------------------------------------------------------------------#}
+{%          set _ = py_methods.append('{"set_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_value", _set_' ~ d.name|lower ~ '_' ~ v.name|lower ~ '_' ~ df.name|lower ~ '_value, METH_VARARGS, "Sets the value for ' ~ d.name ~ '::' ~ v.name ~ '::' ~ df.name ~ '"},') -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%-       endif -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
 {%-     endfor -%}
 {%-   endfor -%}
 {%- endfor %}
+/*--------------------------------------------------------------------------------------------------------------------*/
 
 static PyMethodDef MethodDefs[] = {
-{%  for m in py_methods %}
+{%-  for m in py_methods %}
     {{ m }}
-{%  endfor %}
+{%-  endfor -%}
     {"send_message", send_message, METH_VARARGS, "Send a message to a device."},
-    {"stream_pub",  stream_pub,  METH_VARARGS, "Publishes an entry to a stream."},
-    {"start",       worker_start, METH_VARARGS, "Starts the node."},
-    {"stop",        worker_stop,  METH_NOARGS,  "Stops the node."},
+    {"stream_pub", stream_pub, METH_VARARGS, "Publishes an entry to a stream."},
+    {"start", worker_start, METH_VARARGS, "Starts the node."},
+    {"stop", worker_stop, METH_NOARGS, "Stops the node."},
     {NULL, NULL, 0, NULL},
 };
+
+/*--------------------------------------------------------------------------------------------------------------------*/
 
 static void ModuleFree(void *module)
 {
     worker_stop(NULL, NULL);
 }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
 
 static struct PyModuleDef ModuleDef = {
     PyModuleDef_HEAD_INIT,
@@ -924,17 +616,20 @@ static struct PyModuleDef ModuleDef = {
     ModuleFree
 };
 
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 PyMODINIT_FUNC PyInit_{{ descr.nodeName }}()
 {
     PyObject *module = PyModule_Create(&ModuleDef);
 
     if(module != NULL)
     {
-        PyModule_AddIntConstant(module, "NYX_STATE_IDLE",  NYX_STATE_IDLE);
-        PyModule_AddIntConstant(module, "NYX_STATE_OK",    NYX_STATE_OK);
-        PyModule_AddIntConstant(module, "NYX_STATE_BUSY",  NYX_STATE_BUSY);
+        PyModule_AddIntConstant(module, "NYX_STATE_IDLE", NYX_STATE_IDLE);
+        PyModule_AddIntConstant(module, "NYX_STATE_OK", NYX_STATE_OK);
+        PyModule_AddIntConstant(module, "NYX_STATE_BUSY", NYX_STATE_BUSY);
         PyModule_AddIntConstant(module, "NYX_STATE_ALERT", NYX_STATE_ALERT);
-        PyModule_AddIntConstant(module, "NYX_ONOFF_ON",  NYX_ONOFF_ON);
+
+        PyModule_AddIntConstant(module, "NYX_ONOFF_ON", NYX_ONOFF_ON);
         PyModule_AddIntConstant(module, "NYX_ONOFF_OFF", NYX_ONOFF_OFF);
     }
 
@@ -954,6 +649,152 @@ PyMODINIT_FUNC PyInit_{{ descr.nodeName }}()
                     template,
                     devices = self._devices
                 ))
+
+    ####################################################################################################################
+
+    def _generate_devices(self) -> None:
+
+        template = '''
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+#include "autogen/glue.{{ head_ext }}"
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+{%- set ns = namespace(any_callbacks = false) -%}
+{#--------------------------------------------------------------------------------------------------------------------#}
+{%- for v in device.vectors -%}
+{%-   for df in v.defs if df.callback -%}
+{%-     set ns.any_callbacks = true -%}
+{%-     if v.type == 'number' -%}
+{%-       set subtype = get_number_type(df.format) -%}
+{%-       if   subtype == NYX_NUMBER_INT    -%}{% set ctype = 'int'           %}{% set pfmt = '(i)' %}
+{%-       elif subtype == NYX_NUMBER_UINT   -%}{% set ctype = 'unsigned int'  %}{% set pfmt = '(i)' %}
+{%-       elif subtype == NYX_NUMBER_LONG   -%}{% set ctype = 'long'          %}{% set pfmt = '(l)' %}
+{%-       elif subtype == NYX_NUMBER_ULONG  -%}{% set ctype = 'unsigned long' %}{% set pfmt = '(l)' %}
+{%-       elif subtype == NYX_NUMBER_DOUBLE -%}{% set ctype = 'double'        %}{% set pfmt = '(d)' %}
+{%-       endif -%}
+{%-     elif v.type in ['light','switch']   -%}{% set ctype = 'int'   %}{% set pfmt = '(i)' %}
+{%-     elif v.type == 'text'               -%}{% set ctype = 'STR_t' %}{% set pfmt = '(s)' %}
+{%-     elif v.type == 'blob'               -%}{% set ctype = None    %}{% set pfmt = '(O)' %}
+{%-     endif -%}
+{#------------------------------------------------------------------------------------------------------------------- #}
+{%      if v.type == 'blob' -%}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def_vector, size_t size, BUFF_t buff)
+{
+    if(vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
+{%-     else -%}
+static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def_vector, {{ ctype }} new_value, {{ ctype }} old_value)
+{
+{%-       if v.type != 'text' %}
+    if(new_value != old_value && vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
+{%-       else %}
+    if((strcmp(new_value, old_value) != 0 && vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
+{%-       endif %}
+{%-     endif %}
+    {
+        /*------------------------------------------------------------------------------------------------------------*/
+        /* !!! AUTOGENERATED CODE !!!                                                                                 */
+        /*------------------------------------------------------------------------------------------------------------*/
+
+        PyGILState_STATE gstate = PyGILState_Ensure();
+{%     if v.type == 'blob' %}
+        PyObject *py_bytes = PyBytes_FromStringAndSize((const char *) buff, (Py_ssize_t) size);
+        PyObject *args = Py_BuildValue("{{ pfmt }}", py_bytes);
+        Py_DECREF(py_bytes);
+{%-     else %}
+        PyObject *args = Py_BuildValue("{{ pfmt }}", new_value);
+{%-     endif %}
+        
+        PyObject *result = PyObject_CallObject(vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback, args);
+        
+        Py_DECREF(args);
+        
+        if(result == NULL) {
+            PyErr_Print();
+        } else {
+            Py_DECREF(result);
+        }
+
+        PyGILState_Release(gstate);
+        
+        /*------------------------------------------------------------------------------------------------------------*/
+        /* USER FREE CODE                                                                                             */
+        /*------------------------------------------------------------------------------------------------------------*/
+
+        /* TO BE IMPLEMENTED */
+
+        /*------------------------------------------------------------------------------------------------------------*/
+    }
+
+    return true;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+{%   endfor -%}
+{%-   if v.callback %}
+static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
+{
+}
+{%-   endif -%}
+{%- endfor -%}
+
+{%- if not ns.any_callbacks %}
+/* TO BE IMPLEMENTED */
+{%- endif %}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void device_{{ device.name|lower }}_initialize()
+{
+{%- for v in device.vectors -%}
+{%-   for df in v.defs if df.callback -%}
+{%-     if v.type == 'number' -%}
+{%          set subtype = get_number_type(df.format) -%}
+{%-         if   subtype == NYX_NUMBER_INT   %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int    = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_UINT  %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_LONG  %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_ULONG %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}   vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         endif -%}
+{%-     elif v.type == 'text'   %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'light'  %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'switch' %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'blob'   %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     endif -%}
+{%    endfor -%}
+{%-   if v.callback %}
+
+    vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
+{%    endif -%}
+{%- endfor %}
+
+    /* TO BE IMPLEMENTED */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void device_{{ device.name|lower }}_finalize()
+{
+    /* TO BE IMPLEMENTED */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+'''[1:]
+
+        for device in self._devices:
+
+            filename = os.path.join(self._driver_path, 'src', f'device_{device["name"].lower()}.{self._src_ext}')
+
+            if self._override_device or not os.path.isfile(filename):
+
+                with open(filename, 'wt', encoding = 'utf-8') as f:
+
+                    f.write(self.render(
+                        template,
+                        device = device
+                    ))
 
     ####################################################################################################################
 
