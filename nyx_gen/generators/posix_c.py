@@ -211,9 +211,6 @@ int main()
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
     nyx_node_t *node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
@@ -229,6 +226,9 @@ int main()
         true
     );
 
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+    
     while(s_signo == 0)
     {
         nyx_node_poll(node, {{ descr.nodeTimeout }});
