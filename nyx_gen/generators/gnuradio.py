@@ -432,16 +432,6 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
         size_t *sizes = nyx_memory_alloc(n_fields * sizeof(size_t));
         buff_t *buffs = nyx_memory_alloc(n_fields * sizeof(buff_t));
 
-        if(names == NULL || sizes == NULL || buffs == NULL)
-        {
-            nyx_memory_free(names);
-            nyx_memory_free(sizes);
-            nyx_memory_free(buffs);
-
-            PyErr_NoMemory();
-            return NULL;
-        }
-
         /*------------------------------------------------------------------------------------------------------------*/
 
         PyObject *keys = PyDict_Keys(field_dict);
