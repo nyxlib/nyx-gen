@@ -383,6 +383,27 @@ static PyObject *send_message(PyObject *self, PyObject *args)
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+static PyObject *send_del_property(PyObject *self, PyObject *args)
+{
+    if(node != NULL)
+    {
+        STR_t device;
+        STR_t name;
+        STR_t message;
+
+        if(!PyArg_ParseTuple(args, "szs", &device, &name, &message))
+        {
+            return NULL;
+        }
+        
+        nyx_node_send_del_property(node, device, name, message);
+    }
+
+    Py_RETURN_NONE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 static PyObject *stream_pub(PyObject *self, PyObject *args)
 {
     if(node != NULL)
@@ -545,7 +566,8 @@ static PyMethodDef MethodDefs[] = {
 {%-  for m in py_methods %}
     {{ m }}
 {%-  endfor -%}
-    {"send_message", send_message, METH_VARARGS, "Send a message to a device."},
+    {"send_message", send_message, METH_VARARGS, "Sends a human-oriented message to the clients."},
+    {"send_del_property", send_del_property, METH_VARARGS, "Sends a del-property message to the clients."},
     {"stream_pub", stream_pub, METH_VARARGS, "Publishes an entry to a stream."},
     {"start", worker_start, METH_VARARGS, "Starts the node."},
     {"stop", worker_stop, METH_NOARGS, "Stops the node."},
