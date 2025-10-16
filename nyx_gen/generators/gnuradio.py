@@ -383,21 +383,6 @@ static PyObject *send_message(PyObject *self, PyObject *args)
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static nyx_dict_t *resolve_stream_vector(STR_t device_name, STR_t stream_name)
-{
-{%- for d in devices -%}
-{%-   for v in d.vectors if v.type == 'stream' %}
-    if(strcmp(device_name, "{{ d.name }}") == 0 && strcmp(stream_name, "{{ v.name }}") == 0) {
-        return vector_{{ d.name|lower }}_{{ v.name|lower }};
-    }
-{%-   endfor -%}
-{%- endfor %}
-
-    return NULL;
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 static PyObject *stream_pub(PyObject *self, PyObject *args)
 {
     if(node != NULL)
@@ -416,21 +401,11 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 
         /*------------------------------------------------------------------------------------------------------------*/
 
-        nyx_dict_t *vector = resolve_stream_vector(device_name, stream_name);
-
-        if(vector == NULL)
-        {
-            PyErr_SetString(PyExc_ValueError, "Unknown device / stream");
-            return NULL;
-        }
-
-        /*------------------------------------------------------------------------------------------------------------*/
-
         Py_ssize_t n_fields = PyDict_Size(field_dict);
 
-        str_t  *names = nyx_memory_alloc(n_fields * sizeof(str_t ));
+        STR_t  *names = nyx_memory_alloc(n_fields * sizeof(str_t ));
         size_t *sizes = nyx_memory_alloc(n_fields * sizeof(size_t));
-        buff_t *buffs = nyx_memory_alloc(n_fields * sizeof(buff_t));
+        BUFF_t *buffs = nyx_memory_alloc(n_fields * sizeof(buff_t));
 
         /*------------------------------------------------------------------------------------------------------------*/
 
@@ -458,15 +433,7 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 
         /*------------------------------------------------------------------------------------------------------------*/
 
-        if(!nyx_stream_pub(vector, (size_t) max_len, (size_t) n_fields, names, sizes, buffs))
-        {    
-            nyx_memory_free(names);
-            nyx_memory_free(sizes);
-            nyx_memory_free(buffs);
-
-            PyErr_SetString(PyExc_TypeError, "Cannot publish stream");
-            return NULL;
-        }
+        nyx_redis_pub(node, device_name, stream_name, (size_t) max_len, (size_t) n_fields, names, sizes, buffs);
 
         /*------------------------------------------------------------------------------------------------------------*/
 
