@@ -161,7 +161,7 @@ protected:
     /*----------------------------------------------------------------------------------------------------------------*/
 {%  for v in device.vectors %}
 {%-   for df in v.defs %}
-    nyx_dict_t *vector_def_{{ v.name|lower }}_{{ df.name|lower }} = {{ null }};
+    nyx_dict_t *vector_{{ v.name|lower }}_{{ df.name|lower }} = {{ null }};
 {%-   endfor %}
     nyx_dict_t *vector_{{ v.name|lower }} = {{ null }};
 {% endfor %}
@@ -279,58 +279,58 @@ void Device{{ device.name|pascalcase }}::initialize()
 {%-     if v.type == 'number' -%}
 {%-         set subtype = get_number_type(df.format) %}
 {%          if subtype == NYX_NUMBER_INT %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_int("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_prop_new_int("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_UINT %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_uint("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_prop_new_uint("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_LONG %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_long("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_prop_new_long("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_ULONG %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_ulong("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_prop_new_ulong("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         elif subtype == NYX_NUMBER_DOUBLE %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_def_new_double("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_number_prop_new_double("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.min }}, {{ df.max }}, {{ df.step }}, {{ df.value }});
 {%-         endif -%}
 {%-     elif v.type == 'text' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_text_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.value }}");
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_text_prop_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.value }}");
 {%-     elif v.type == 'light' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_light_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_light_prop_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, {{ df.value }});
 {%-     elif v.type == 'switch' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_switch_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_switch_prop_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, {{ df.value }});
 {%-     elif v.type == 'blob' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_blob_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.value }});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_blob_prop_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %}, "{{ df.format }}", {{ df.value }});
 {%-     elif v.type == 'stream' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_def_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %});
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx_stream_prop_new("{{ df.name }}", {% if (df.label|default('')|trim)|length > 0 %}"{{ df.label|trim }}"{% else %}{{ null }}{% endif %});
 {%-     endif %}
 {%-     if df.callback -%}
 {%-       if v.type == 'number' -%}
 {%-           set subtype = get_number_type(df.format) %}
 {%            if subtype == NYX_NUMBER_INT %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-           elif subtype == NYX_NUMBER_UINT %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-           elif subtype == NYX_NUMBER_LONG %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-           elif subtype == NYX_NUMBER_ULONG %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-           elif subtype == NYX_NUMBER_DOUBLE %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-           endif %}
 {%-       elif v.type == 'text' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-       elif v.type == 'light' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-       elif v.type == 'switch' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-       elif v.type == 'blob' %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-       endif -%}
 {%-     endif %}
-    this->vector_def_{{ v.name|lower }}_{{ df.name|lower }}->base.ctx = (void *) this;
+    this->vector_{{ v.name|lower }}_{{ df.name|lower }}->base.ctx = (void *) this;
 {%    endfor %}
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    static nyx_dict_t *{{ v.name|lower }}_defs[] = {
+    static nyx_dict_t *{{ v.name|lower }}_props[] = {
 {%-     for df in v.defs %}
-        this->vector_def_{{ v.name|lower }}_{{ df.name|lower }},
+        this->vector_{{ v.name|lower }}_{{ df.name|lower }},
 {%-    endfor %}
         {{ null }},
     };
@@ -347,56 +347,56 @@ void Device{{ device.name|pascalcase }}::initialize()
 
     /*----------------------------------------------------------------------------------------------------------------*/
 {%    if v.type == 'number' %}
-    this->vector_{{ v.name|lower }} = nyx_number_def_vector_new(
+    this->vector_{{ v.name|lower }} = nyx_number_vector_new(
         this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
-        {{ v.name|lower }}_defs,
+        {{ v.name|lower }}_props,
         &{{ v.name|lower }}_opts
     );
 {%    elif v.type == 'text' %}
-    this->vector_{{ v.name|lower }} = nyx_text_def_vector_new(
+    this->vector_{{ v.name|lower }} = nyx_text_vector_new(
         this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
-        {{ v.name|lower }}_defs,
+        {{ v.name|lower }}_props,
         &{{ v.name|lower }}_opts
     );
 {%    elif v.type == 'light' %}
-    this->vector_{{ v.name|lower }} = nyx_light_def_vector_new(
+    this->vector_{{ v.name|lower }} = nyx_light_vector_new(
         this->name(),
         "{{ v.name }}",
         {{ v.state }},
-        {{ v.name|lower }}_defs,
+        {{ v.name|lower }}_props,
         &{{ v.name|lower }}_opts
     );
 {%    elif v.type == 'switch' %}
-    this->vector_{{ v.name|lower }} = nyx_switch_def_vector_new(
+    this->vector_{{ v.name|lower }} = nyx_switch_vector_new(
         this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
         {{ v.rule }},
-        {{ v.name|lower }}_defs,
+        {{ v.name|lower }}_props,
         &{{ v.name|lower }}_opts
     );
 {%    elif v.type == 'blob' %}
-    this->vector_{{ v.name|lower }} = nyx_blob_def_vector_new(
+    this->vector_{{ v.name|lower }} = nyx_blob_vector_new(
         this->name(),
         "{{ v.name }}",
         {{ v.state }},
         {{ v.perm }},
-        {{ v.name|lower }}_defs,
+        {{ v.name|lower }}_props,
         &{{ v.name|lower }}_opts
     );
 {%    elif v.type == 'stream' %}
-    this->vector_{{ v.name|lower }} = nyx_stream_def_vector_new(
+    this->vector_{{ v.name|lower }} = nyx_stream_vector_new(
         this->name(),
         "{{ v.name }}",
         {{ v.state }},
-        {{ v.name|lower }}_defs,
+        {{ v.name|lower }}_props,
         &{{ v.name|lower }}_opts
     );
 {%   endif %}

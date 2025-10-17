@@ -54,7 +54,7 @@ class GNURadioGenerator(PosixCGenerator):
 {%  for d in devices -%}
 {%-   for v in d.vectors -%}
 {%-     for df in v.defs %}
-extern nyx_dict_t *vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }};
+extern nyx_dict_t *vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }};
 {%-     endfor %}
 extern nyx_dict_t *vector_{{ d.name|lower }}_{{ v.name|lower }};
 {%    endfor -%}
@@ -64,7 +64,7 @@ extern nyx_dict_t *vector_{{ d.name|lower }}_{{ v.name|lower }};
 {%  for d in devices -%}
 {%-   for v in d.vectors -%}
 {%-     for df in v.defs if df.callback %}
-extern PyObject *vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback;
+extern PyObject *vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback;
 {%-     endfor -%}
 {%-   endfor -%}
 {%- endfor %}
@@ -498,27 +498,27 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 {%-         if df.callback -%}
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-PyObject *vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
+PyObject *vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
 
 static PyObject *_register_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_callback(PyObject *self, PyObject *args)
 {
-    Py_XDECREF(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
+    Py_XDECREF(vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
 
-    if(!PyArg_ParseTuple(args, "O", &vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
+    if(!PyArg_ParseTuple(args, "O", &vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
     {
         return NULL;
     }
 
-    if(!PyCallable_Check(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
+    if(!PyCallable_Check(vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback))
     {        
-        vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
+        vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback = NULL;
      
         PyErr_SetString(PyExc_TypeError, "Parameter must be callable");
 
         return NULL;
     }
 
-    Py_XINCREF(vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
+    Py_XINCREF(vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback);
 
     Py_RETURN_NONE;
 }
@@ -539,13 +539,13 @@ static PyObject *_set_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_
             return NULL;
         }
 {%          if v.type == 'number' %}
-        nyx_number_def_set_{{ suffix }}((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+        nyx_number_prop_set_{{ suffix }}((nyx_dict_t *) vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
 {%-         elif v.type == 'text' %}
-        nyx_text_def_set((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+        nyx_text_prop_set((nyx_dict_t *) vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
 {%-         elif v.type == 'switch' %}
-        nyx_switch_def_set((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+        nyx_switch_prop_set((nyx_dict_t *) vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
 {%-         elif v.type == 'light' %}
-        nyx_light_def_set((nyx_dict_t *) vector_def_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
+        nyx_light_prop_set((nyx_dict_t *) vector_{{ d.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}, value);
 {%-         endif %}
     }
 
@@ -661,14 +661,14 @@ PyMODINIT_FUNC PyInit_{{ descr.nodeName }}()
 {%      if v.type == 'blob' -%}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def_vector, size_t size, BUFF_t buff)
 {
-    if(vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
+    if(vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
 {%-     else -%}
 static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector, nyx_dict_t *def_vector, {{ ctype }} new_value, {{ ctype }} old_value)
 {
 {%-       if v.type != 'text' %}
-    if(new_value != old_value && vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
+    if(new_value != old_value && vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
 {%-       else %}
-    if((strcmp(new_value, old_value) != 0 && vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
+    if((strcmp(new_value, old_value) != 0 && vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback != NULL)
 {%-       endif %}
 {%-     endif %}
     {
@@ -685,7 +685,7 @@ static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector,
         PyObject *args = Py_BuildValue("{{ pfmt }}", new_value);
 {%-     endif %}
         
-        PyObject *result = PyObject_CallObject(vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback, args);
+        PyObject *result = PyObject_CallObject(vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}_python_callback, args);
         
         Py_DECREF(args);
         
@@ -731,16 +731,16 @@ void device_{{ device.name|lower }}_initialize()
 {%-   for df in v.defs if df.callback -%}
 {%-     if v.type == 'number' -%}
 {%          set subtype = get_number_type(df.format) -%}
-{%-         if   subtype == NYX_NUMBER_INT   %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int    = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_UINT  %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_LONG  %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_ULONG %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-         elif subtype == NYX_NUMBER_DOUBLE %}   vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         if   subtype == NYX_NUMBER_INT   %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int    = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_UINT  %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._uint   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_LONG  %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._long   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_ULONG %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._ulong  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-         elif subtype == NYX_NUMBER_DOUBLE %}   vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._double = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-         endif -%}
-{%-     elif v.type == 'text'   %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     elif v.type == 'light'  %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     elif v.type == 'switch' %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
-{%-     elif v.type == 'blob'   %}    vector_def_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'text'   %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._str   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'light'  %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'switch' %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._int   = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
+{%-     elif v.type == 'blob'   %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-     endif -%}
 {%    endfor -%}
 {%-   if v.callback %}
