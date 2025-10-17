@@ -115,8 +115,6 @@ public:
 
     Device{{ device.name|pascalcase }}();
 
-    ~Device{{ device.name|pascalcase }}();
-
     /*----------------------------------------------------------------------------------------------------------------*/
 
     STR_t name() const override
@@ -170,9 +168,13 @@ protected:
 private:
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    void initialize() override;
+    void glueInitialize() override;
 
-    void finalize() override;
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    void initialize(nyx_node_t *node) override;
+
+    void finalize(nyx_node_t *node) override;
 
     /*----------------------------------------------------------------------------------------------------------------*/
 };
@@ -269,7 +271,7 @@ static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void Device{{ device.name|pascalcase }}::initialize()
+void Device{{ device.name|pascalcase }}::glueInitialize()
 {
 {%- for v in device.vectors %}
     /*----------------------------------------------------------------------------------------------------------------*/
@@ -416,13 +418,6 @@ void Device{{ device.name|pascalcase }}::initialize()
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-
-void Device{{ device.name|pascalcase }}::finalize()
-{
-    /* DO NOTHING  */
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
 '''[1:]
 
         for device in self._devices:
@@ -459,17 +454,20 @@ namespace nyx_{{ descr.nodeName|lower }} {
 
 Device{{ device.name|pascalcase }}::Device{{ device.name|pascalcase }}()
 {
-    this->initialize();
+    this->glueInitialize();
+}
 
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void Device{{ device.name|pascalcase }}::initialize(nyx_node_t *node)
+{
     /* TO BE IMPLEMENTED */
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-Device{{ device.name|pascalcase }}::~Device{{ device.name|pascalcase }}()
+void Device{{ device.name|pascalcase }}::finalize(nyx_node_t *node)
 {
-    this->finalize();
-
     /* TO BE IMPLEMENTED */
 }
 
@@ -560,9 +558,7 @@ class Driver : public Nyx::BaseDriver
 protected:
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    void initialize() override;
-
-    void finalize() override;
+    void glueInitialize() override;
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
@@ -633,18 +629,11 @@ namespace nyx_{{ descr.nodeName|lower }} {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void Driver::initialize()
+void Driver::glueInitialize()
 {
 {%- for d in devices %}
     this->registerDevice(std::unique_ptr<Nyx::BaseDevice>(new Device{{ d.name|pascalcase }}()));
 {%- endfor %}
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void Driver::finalize()
-{
-    /* TO BE IMPLEMENTED */
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
