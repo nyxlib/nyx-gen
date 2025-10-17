@@ -234,12 +234,7 @@ int main()
     signal(SIGTERM, signal_handler);
     
     nyx_device_initialize(node);
-    
-    while(s_signo == 0)
-    {
-        nyx_node_poll(node, {{ descr.nodeTimeout }});
-    }
-
+    while(s_signo == 0) nyx_node_poll(node, {{ descr.nodeTimeout }});
     nyx_device_finalize(node);
 
     nyx_node_finalize(node, true);

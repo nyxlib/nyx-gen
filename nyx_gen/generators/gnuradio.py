@@ -81,7 +81,11 @@ void device_{{ d.name|lower }}_finalize();
 
 void nyx_glue_initialize();
 
-void nyx_glue_finalize();
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void nyx_device_initialize(nyx_node_t *node);
+
+void nyx_device_finalize(nyx_node_t *node);
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -258,16 +262,11 @@ static void *worker_routine(void *arg)
         true
     );
 
-    for(worker_alive = true; worker_alive;)
-    {
-        nyx_node_poll(node, {{ descr.nodeTimeout }});
-    }
+    nyx_device_initialize(node);
+    for(worker_alive = true; worker_alive;) nyx_node_poll(node, {{ descr.nodeTimeout }});
+    nyx_device_finalize(node);
 
     nyx_node_finalize(node, true);
-
-    /*----------------------------------------------------------------------------------------------------------------*/
-
-    nyx_glue_finalize();
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
@@ -712,7 +711,7 @@ static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector,
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 {%   endfor -%}
-{%-   if v.callback %}
+{%-   if v.callback and v.type != 'stream' %}
 static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
 {
 }
@@ -725,7 +724,7 @@ static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void device_{{ device.name|lower }}_initialize()
+void device_{{ device.name|lower }}_initialize(nyx_node_t *node)
 {
 {%- for v in device.vectors -%}
 {%-   for df in v.defs if df.callback -%}
@@ -743,7 +742,7 @@ void device_{{ device.name|lower }}_initialize()
 {%-     elif v.type == 'blob'   %}    vector_{{ device.name|lower }}_{{ v.name|lower }}_{{ df.name|lower }}->base.in_callback._blob  = _{{ v.name|lower }}_{{ df.name|lower }}_callback;
 {%-     endif -%}
 {%    endfor -%}
-{%-   if v.callback %}
+{%-   if v.callback and v.type != 'stream' %}
 
     vector_{{ device.name|lower }}_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
 {%    endif -%}
@@ -754,7 +753,7 @@ void device_{{ device.name|lower }}_initialize()
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void device_{{ device.name|lower }}_finalize()
+void device_{{ device.name|lower }}_finalize(nyx_node_t *node)
 {
     /* TO BE IMPLEMENTED */
 }

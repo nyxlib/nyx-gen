@@ -151,7 +151,7 @@ public:
     bool on{{ v.name|pascalcase }}{{ df.name|pascalcase }}Changed(nyx_dict_t *vector, nyx_dict_t *def, size_t size, BUFF_t buff);
 {%-     endif %}
 {%-   endfor %}
-{%-   if v.callback %}
+{%-   if v.callback and v.type != 'stream' %}
     void on{{ v.name|pascalcase }}Changed(nyx_dict_t *vector, bool modified);
 {%-   endif %}
 {% endfor %}
@@ -254,7 +254,7 @@ static bool _{{ v.name|lower }}_{{ df.name|lower }}_callback(nyx_dict_t *vector,
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* VECTOR CALLBACKS                                                                                                   */
 /*--------------------------------------------------------------------------------------------------------------------*/
-{%- for v in device.vectors if v.callback %}
+{%- for v in device.vectors if v.callback and v.type != 'stream' %}
 
 static void _{{ v.name|lower }}_callback(nyx_dict_t *vector, bool modified)
 {
@@ -400,7 +400,7 @@ void Device{{ device.name|pascalcase }}::initialize()
         &{{ v.name|lower }}_opts
     );
 {%   endif %}
-{%- if v.callback %}
+{%- if v.callback and v.type != 'stream' %}
     this->vector_{{ v.name|lower }}->base.in_callback._vector = _{{ v.name|lower }}_callback;
 {%-  endif %}
 {%- if device.disabled|default(false) or v.disabled|default(false) %}
@@ -506,7 +506,7 @@ bool Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}{{ df.name|pas
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 {%-   endfor -%}
-{%-   if v.callback %}
+{%-   if v.callback and v.type != 'stream' %}
 
 void Device{{ device.name|pascalcase }}::on{{ v.name|pascalcase }}Changed(nyx_dict_t *vector, bool modified)
 {
