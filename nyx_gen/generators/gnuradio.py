@@ -195,8 +195,8 @@ install(FILES ./grc/nyx_{{ descr.nodeName|lower }}_sink.block.yml DESTINATION ${
 #include "autogen/glue.{{ head_ext }}"
 #include "credentials.{{ head_ext }}"
 
-__NULLABLE__ str_t nyx_string_dup(
-    __NULLABLE__ STR_t s
+__NYX_NULLABLE__ str_t nyx_string_dup(
+    __NYX_NULLABLE__ STR_t s
 );
 
 /*--------------------------------------------------------------------------------------------------------------------*/
