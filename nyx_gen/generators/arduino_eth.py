@@ -59,4 +59,31 @@ framework = arduino
                     ram = ram
                 ))
 
+    ####################################################################################################################
+
+    def _generate_main(self) -> None:
+
+        ################################################################################################################
+        # credentials.h                                                                                                #
+        ################################################################################################################
+
+        template = '''
+#define MQTT_USERNAME {% if descr.enableMQTT %}"{{ descr.mqttUsername }}"{% else %}{{ null }}{% endif %}
+#define MQTT_PASSWORD {% if descr.enableMQTT %}"{{ descr.mqttPassword }}"{% else %}{{ null }}{% endif %}
+#define REDIS_USERNAME {% if descr.enableRedis %}"{{ descr.redisUsername }}"{% else %}{{ null }}{% endif %}
+#define REDIS_PASSWORD {% if descr.enableRedis %}"{{ descr.redisPassword }}"{% else %}{{ null }}{% endif %}
+'''[1:]
+
+        filename = os.path.join(self._driver_path, 'src', f'credentials.{self._head_ext}')
+
+        with open(filename, 'wt', encoding = 'utf-8') as f:
+
+            f.write(self.render(
+                template
+            ))
+
+        ################################################################################################################
+        # main.c                                                                                                       #
+        ################################################################################################################
+
 ########################################################################################################################
