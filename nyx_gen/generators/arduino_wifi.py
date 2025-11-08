@@ -34,7 +34,7 @@ class ArduinoWifiGenerator(PosixCGenerator):
 [env]
 build_flags = -DNYX_HAS_WIFI -DNYX_RAM_SIZE={ram} -Wno-unused-function
 
-lib_deps = PubSubClient, https://github.com/nyxlib/nyx-node.git
+lib_deps = PubSubClient, arduino-timer, https://github.com/nyxlib/nyx-node.git
 
 lib_ignore = FATFilesystem
 

@@ -34,7 +34,7 @@ class ArduinoEthGenerator(PosixCGenerator):
 [env]
 build_flags = -DNYX_HAS_ETHERNET -DNYX_RAM_SIZE={ram} -Wno-unused-function
 
-lib_deps = PubSubClient, arduino-libraries/Ethernet, https://github.com/nyxlib/nyx-node.git
+lib_deps = PubSubClient, arduino-timer, arduino-libraries/Ethernet, https://github.com/nyxlib/nyx-node.git
 
 lib_ignore = WiFiS3, FATFilesystem
 
