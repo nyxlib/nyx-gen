@@ -88,4 +88,20 @@ framework = arduino
         # main.c                                                                                                       #
         ################################################################################################################
 
+        template = '''
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+'''[1:]
+
+        filename = os.path.join(self._driver_path, 'src', f'main.{self._src_ext}')
+
+        if self._override_main or not os.path.isfile(filename):
+
+            with open(filename, 'wt', encoding = 'utf-8') as f:
+
+                f.write(self.render(
+                    template,
+                    devices = self._devices
+                ))
+
 ########################################################################################################################
