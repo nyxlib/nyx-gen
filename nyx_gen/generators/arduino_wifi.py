@@ -99,7 +99,7 @@ framework = arduino
 #  include <WiFi.h>
 #endif
 
-#include "glue.{{ head_ext }}"
+#include "autogen/glue.{{ head_ext }}"
 #include "credentials.{{ head_ext }}"
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -165,7 +165,7 @@ void setup()
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    nyx_node_t *node = nyx_node_initialize(
+    node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
         {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %},
@@ -189,7 +189,7 @@ void loop()
 {
     if(node != nullptr)
     {
-        nyx_node_poll(node, {descr.nodeTimeout});
+        nyx_node_poll(node, {{ descr.nodeTimeout }});
     }
 }
 
