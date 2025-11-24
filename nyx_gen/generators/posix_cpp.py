@@ -589,7 +589,7 @@ protected:
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    STR_t tcpURI() const override;
+    STR_t indiURI() const override;
 
     STR_t mqttURI() const override;
     STR_t mqttUsername() const override;
@@ -658,7 +658,7 @@ void Driver::glueInitialize()
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-STR_t Driver::tcpURI() const
+STR_t Driver::indiURI() const
 {
     return {%- if descr.enableTCP %} "{{ descr.tcpURI }}" {%- else %} {{ null }} {%- endif %};
 }
@@ -760,13 +760,13 @@ int Driver::nodeTimeoutMS() const
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-int main()
+int main(int argc, char **argv)
 {
     nyx_set_log_level(NYX_LOG_LEVEL_INFO);
 
     nyx_{{ descr.nodeName|lower }}::Driver driver;
 
-    return driver.run();
+    return driver.run(argc, argv);
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

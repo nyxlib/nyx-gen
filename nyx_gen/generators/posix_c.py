@@ -192,7 +192,7 @@ static void signal_handler(int signo)
 
 static void print_usage(
     STR_t prog,
-    STR_t tcp_uri,
+    STR_t indi_uri,
     STR_t mqtt_uri,
     STR_t redis_uri,
     STR_t mqtt_username,
@@ -206,23 +206,23 @@ static void print_usage(
         "Usage: %s [options]\\n"
         "\\n"
         "Options:\\n"
-        "  -t URI   TCP server URI (default: %s)\\n"
+        "  -i URI   INDI server URI (default: %s)\\n"
         "  -m URI   MQTT broker URI (default: %s)\\n"
         "  -r URI   Redis server URI (default: %s)\\n"
         "  -u USER  MQTT username (default: %s)\\n"
         "  -p PASS  MQTT password (default: %s)\\n"
         "  -U USER  Redis username (default: %s)\\n"
         "  -P PASS  Redis password (default: %s)\\n"
-        "  -T MS    Node poll timeout (default: %d)\\n"
+        "  -t MS    Node poll timeout (default: %d)\\n"
         "  -h       Show this help and exit\\n",
         prog,
-        tcp_uri        ? tcp_uri        : "disabled",
-        mqtt_uri       ? mqtt_uri       : "disabled",
-        redis_uri      ? redis_uri      : "disabled",
-        mqtt_username  ? mqtt_username  : "none",
-        mqtt_password  ? mqtt_password  : "none",
-        redis_username ? redis_username : "none",
-        redis_password ? redis_password : "none",
+        indi_uri != NULL && indi_uri[0] != '\\0' ? indi_uri : "none",
+        mqtt_uri != NULL && mqtt_uri[0] != '\\0' ? mqtt_uri : "none",
+        redis_uri != NULL && redis_uri[0] != '\\0' ? redis_uri : "none",
+        mqtt_username != NULL && mqtt_username[0] != '\\0' ? mqtt_username : "none",
+        mqtt_password != NULL && mqtt_password[0] != '\\0' ? mqtt_password : "none",
+        redis_username != NULL && redis_username[0] != '\\0' ? redis_username : "none",
+        redis_password != NULL && redis_password[0] != '\\0' ? redis_password : "none",
         node_timeout
     );
 }
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 {
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    STR_t tcp_uri = {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %};
+    STR_t indi_uri = {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %};
     STR_t mqtt_uri = {% if descr.enableMQTT %}"{{ descr.mqttURI }}"{% else %}{{ null }}{% endif %};
     STR_t redis_uri = {% if descr.enableRedis %}"{{ descr.redisURI }}"{% else %}{{ null }}{% endif %};
 
@@ -248,12 +248,12 @@ int main(int argc, char **argv)
 
     int opt;
 
-    while((opt = getopt(argc, argv, "t:m:r:u:p:U:P:T:h")) != -1)
+    while((opt = getopt(argc, argv, "i:m:r:u:p:U:P:t:h")) != -1)
     {
         switch (opt)
         {
-            case 't':
-                tcp_uri = optarg;
+            case 'i':
+                indi_uri = optarg;
                 break;
             case 'm':
                 mqtt_uri = optarg;
@@ -273,14 +273,14 @@ int main(int argc, char **argv)
             case 'P':
                 redis_password = optarg;
                 break;
-            case 'T':
+            case 't':
                 node_timeout = atoi(optarg);
                 break;
             case 'h':
             default:
                 print_usage(
                     argv[0],
-                    tcp_uri,
+                    indi_uri,
                     mqtt_uri,
                     redis_uri,
                     mqtt_username,
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
     nyx_node_t *node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
-        tcp_uri,
+        indi_uri,
         mqtt_uri,
         mqtt_username,
         mqtt_password,
