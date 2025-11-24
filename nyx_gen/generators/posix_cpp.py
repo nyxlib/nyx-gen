@@ -589,13 +589,13 @@ protected:
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    STR_t indiURI() const override;
+    STR_t indiURL() const override;
 
-    STR_t mqttURI() const override;
+    STR_t mqttURL() const override;
     STR_t mqttUsername() const override;
     STR_t mqttPassword() const override;
 
-    STR_t redisURI() const override;
+    STR_t redisURL() const override;
     STR_t redisUsername() const override;
     STR_t redisPassword() const override;
 
@@ -658,14 +658,14 @@ void Driver::glueInitialize()
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-STR_t Driver::indiURI() const
+STR_t Driver::indiURL() const
 {
     return {%- if descr.enableTCP %} "{{ descr.tcpURI }}" {%- else %} {{ null }} {%- endif %};
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-STR_t Driver::mqttURI() const
+STR_t Driver::mqttURL() const
 {
     return {%- if descr.enableMQTT %} "{{ descr.mqttURI }}" {%- else %} {{ null }} {%- endif %};
 }
@@ -686,7 +686,7 @@ STR_t Driver::mqttPassword() const
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-STR_t Driver::redisURI() const
+STR_t Driver::redisURL() const
 {
     return {%- if descr.enableRedis %} "{{ descr.redisURI }}" {%- else %} {{ null }} {%- endif %};
 }

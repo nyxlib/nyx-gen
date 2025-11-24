@@ -192,9 +192,9 @@ static void signal_handler(int signo)
 
 static void print_usage(
     STR_t prog,
-    STR_t indi_uri,
-    STR_t mqtt_uri,
-    STR_t redis_uri,
+    STR_t indi_url,
+    STR_t mqtt_url,
+    STR_t redis_url,
     STR_t mqtt_username,
     STR_t mqtt_password,
     STR_t redis_username,
@@ -216,9 +216,9 @@ static void print_usage(
         "  -t MS    Node poll timeout (default: %d)\\n"
         "  -h       Show this help and exit\\n",
         prog,
-        indi_uri != NULL && indi_uri[0] != '\\0' ? indi_uri : "none",
-        mqtt_uri != NULL && mqtt_uri[0] != '\\0' ? mqtt_uri : "none",
-        redis_uri != NULL && redis_uri[0] != '\\0' ? redis_uri : "none",
+        indi_url != NULL && indi_url[0] != '\\0' ? indi_url : "none",
+        mqtt_url != NULL && mqtt_url[0] != '\\0' ? mqtt_url : "none",
+        redis_url != NULL && redis_url[0] != '\\0' ? redis_url : "none",
         mqtt_username != NULL && mqtt_username[0] != '\\0' ? mqtt_username : "none",
         mqtt_password != NULL && mqtt_password[0] != '\\0' ? mqtt_password : "none",
         redis_username != NULL && redis_username[0] != '\\0' ? redis_username : "none",
@@ -233,9 +233,9 @@ int main(int argc, char **argv)
 {
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    STR_t indi_uri = {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %};
-    STR_t mqtt_uri = {% if descr.enableMQTT %}"{{ descr.mqttURI }}"{% else %}{{ null }}{% endif %};
-    STR_t redis_uri = {% if descr.enableRedis %}"{{ descr.redisURI }}"{% else %}{{ null }}{% endif %};
+    STR_t indi_url = {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %};
+    STR_t mqtt_url = {% if descr.enableMQTT %}"{{ descr.mqttURI }}"{% else %}{{ null }}{% endif %};
+    STR_t redis_url = {% if descr.enableRedis %}"{{ descr.redisURI }}"{% else %}{{ null }}{% endif %};
 
     STR_t mqtt_username = MQTT_USERNAME;
     STR_t mqtt_password = MQTT_PASSWORD;
@@ -253,13 +253,13 @@ int main(int argc, char **argv)
         switch (opt)
         {
             case 'i':
-                indi_uri = optarg;
+                indi_url = optarg;
                 break;
             case 'm':
-                mqtt_uri = optarg;
+                mqtt_url = optarg;
                 break;
             case 'r':
-                redis_uri = optarg;
+                redis_url = optarg;
                 break;
             case 'u':
                 mqtt_username = optarg;
@@ -280,9 +280,9 @@ int main(int argc, char **argv)
             default:
                 print_usage(
                     argv[0],
-                    indi_uri,
-                    mqtt_uri,
-                    redis_uri,
+                    indi_url,
+                    mqtt_url,
+                    redis_url,
                     mqtt_username,
                     mqtt_password,
                     redis_username,
@@ -322,12 +322,12 @@ int main(int argc, char **argv)
     nyx_node_t *node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
-        indi_uri,
-        mqtt_uri,
+        indi_url,
+        mqtt_url,
         mqtt_username,
         mqtt_password,
         {{ null }},
-        redis_uri,
+        redis_url,
         redis_username,
         redis_password,
         3000,
