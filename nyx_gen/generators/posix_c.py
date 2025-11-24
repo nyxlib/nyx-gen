@@ -95,6 +95,8 @@ target_link_libraries({{ descr.nodeName|lower }} PRIVATE NyxNode::nyx-node-{{ 's
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+#include <unistd.h>
+
 #include <nyx_node.h>
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -211,7 +213,7 @@ static void print_usage(
         "  -p PASS  MQTT password (default: %s)\\n"
         "  -U USER  Redis username (default: %s)\\n"
         "  -P PASS  Redis password (default: %s)\\n"
-        "  -T MS    Node poll timeout in milliseconds (default: %d)\\n"
+        "  -T MS    Node poll timeout (default: %d)\\n"
         "  -h       Show this help and exit\\n",
         prog,
         tcp_uri        ? tcp_uri        : "disabled",
@@ -227,7 +229,7 @@ static void print_usage(
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-int main()
+int main(int argc, char **argv)
 {
     /*----------------------------------------------------------------------------------------------------------------*/
 
@@ -246,7 +248,7 @@ int main()
 
     int opt;
 
-    while((opt = getopt(argc, argv, "ht:m:r:u:p:U:P:T:")) != -1)
+    while((opt = getopt(argc, argv, "t:m:r:u:p:U:P:T:h")) != -1)
     {
         switch (opt)
         {
@@ -328,7 +330,7 @@ int main()
         redis_uri,
         redis_username,
         redis_password,
-        node_timeout,
+        3000,
         true
     );
 
@@ -336,7 +338,7 @@ int main()
     signal(SIGTERM, signal_handler);
     
     nyx_device_initialize(node);
-    while(s_signo == 0) nyx_node_poll(node, {{ descr.nodeTimeout }});
+    while(s_signo == 0) nyx_node_poll(node, node_timeout);
     nyx_device_finalize(node);
 
     nyx_node_finalize(node, true);
