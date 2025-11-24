@@ -188,8 +188,110 @@ static void signal_handler(int signo)
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+static void print_usage(
+    STR_t prog,
+    STR_t tcp_uri,
+    STR_t mqtt_uri,
+    STR_t redis_uri,
+    STR_t mqtt_username,
+    STR_t mqtt_password,
+    STR_t redis_username,
+    STR_t redis_password,
+    int node_timeout
+) {
+    fprintf(
+        stderr,
+        "Usage: %s [options]\\n"
+        "\\n"
+        "Options:\\n"
+        "  -t URI   TCP server URI (default: %s)\\n"
+        "  -m URI   MQTT broker URI (default: %s)\\n"
+        "  -r URI   Redis server URI (default: %s)\\n"
+        "  -u USER  MQTT username (default: %s)\\n"
+        "  -p PASS  MQTT password (default: %s)\\n"
+        "  -U USER  Redis username (default: %s)\\n"
+        "  -P PASS  Redis password (default: %s)\\n"
+        "  -T MS    Node poll timeout in milliseconds (default: %d)\\n"
+        "  -h       Show this help and exit\\n",
+        prog,
+        tcp_uri        ? tcp_uri        : "disabled",
+        mqtt_uri       ? mqtt_uri       : "disabled",
+        redis_uri      ? redis_uri      : "disabled",
+        mqtt_username  ? mqtt_username  : "none",
+        mqtt_password  ? mqtt_password  : "none",
+        redis_username ? redis_username : "none",
+        redis_password ? redis_password : "none",
+        node_timeout
+    );
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 int main()
 {
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    STR_t tcp_uri = {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %};
+    STR_t mqtt_uri = {% if descr.enableMQTT %}"{{ descr.mqttURI }}"{% else %}{{ null }}{% endif %};
+    STR_t redis_uri = {% if descr.enableRedis %}"{{ descr.redisURI }}"{% else %}{{ null }}{% endif %};
+
+    STR_t mqtt_username = MQTT_USERNAME;
+    STR_t mqtt_password = MQTT_PASSWORD;
+    STR_t redis_username = REDIS_USERNAME;
+    STR_t redis_password = REDIS_PASSWORD;
+
+    int node_timeout = {{ descr.nodeTimeout }};
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    int opt;
+
+    while((opt = getopt(argc, argv, "ht:m:r:u:p:U:P:T:")) != -1)
+    {
+        switch (opt)
+        {
+            case 't':
+                tcp_uri = optarg;
+                break;
+            case 'm':
+                mqtt_uri = optarg;
+                break;
+            case 'r':
+                redis_uri = optarg;
+                break;
+            case 'u':
+                mqtt_username = optarg;
+                break;
+            case 'p':
+                mqtt_password = optarg;
+                break;
+            case 'U':
+                redis_username = optarg;
+                break;
+            case 'P':
+                redis_password = optarg;
+                break;
+            case 'T':
+                node_timeout = atoi(optarg);
+                break;
+            case 'h':
+            default:
+                print_usage(
+                    argv[0],
+                    tcp_uri,
+                    mqtt_uri,
+                    redis_uri,
+                    mqtt_username,
+                    mqtt_password,
+                    redis_username,
+                    redis_password,
+                    node_timeout
+                );
+
+                return (opt == 'h') ? 0 : 1;
+        }
+    }
+    
     /*----------------------------------------------------------------------------------------------------------------*/
 
     nyx_set_log_level(NYX_LOG_LEVEL_INFO);
@@ -218,15 +320,15 @@ int main()
     nyx_node_t *node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
-        {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %},
-        {% if descr.enableMQTT %}"{{ descr.mqttURI }}"{% else %}{{ null }}{% endif %},
-        MQTT_USERNAME,
-        MQTT_PASSWORD,
+        tcp_uri,
+        mqtt_uri,
+        mqtt_username,
+        mqtt_password,
         {{ null }},
-        {% if descr.enableRedis %}"{{ descr.redisURI }}"{% else %}{{ null }}{% endif %},
-        REDIS_USERNAME,
-        REDIS_PASSWORD,
-        3000,
+        redis_uri,
+        redis_username,
+        redis_password,
+        node_timeout,
         true
     );
 
