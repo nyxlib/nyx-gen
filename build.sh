@@ -46,6 +46,8 @@ fi
 
 if [[ -d "${NYX_GEN_HOME}/../src-tauri/binaries/" ]]
 then
+  echo "Copying '${NYX_GEN_HOME}/bin/nyx-gen-${NYX_GEN_HOST}' to '${NYX_GEN_HOME}/../src-tauri/binaries/'"
+ 
   cp "${NYX_GEN_HOME}/bin/nyx-gen-${NYX_GEN_HOST}" "${NYX_GEN_HOME}/../src-tauri/binaries/"
 fi
 
