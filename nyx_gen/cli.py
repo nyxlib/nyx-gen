@@ -4,6 +4,8 @@
 import json
 import argparse
 
+from datetime import datetime
+
 ########################################################################################################################
 
 from . import generators, __version__
@@ -14,21 +16,25 @@ def main():
 
     ####################################################################################################################
 
-    parser = argparse.ArgumentParser(description = 'Generate an Nyx driver skeleton from a description file')
+    parser = argparse.ArgumentParser(
+        formatter_class = argparse.RawTextHelpFormatter,
+        description = 'Generate an Nyx driver skeleton from a description file.',
+        epilog = f'Copyright 2024-{datetime.now().year} Nyx Gen — Jérôme ODIER, LPSC / CNRS — https://nyxlib.org/.\nNyx Gen is Free Software under GPL-3.0-or-later.'
+    )
 
-    parser.add_argument('--version', action = 'version', version = __version__, help = 'Print version information and exit')
+    parser.add_argument('--version', action = 'version', version = __version__, help = 'Print version information and exit.')
 
-    parser.add_argument('--profiles', action = 'version', version = ', '.join(generators.keys()), help = 'Print profile names and exit')
+    parser.add_argument('--profiles', action = 'version', version = ', '.join(generators.keys()), help = 'Print profile names and exit.')
 
-    parser.add_argument('--override-project', action = 'store_true', help = 'Override the project output folder')
+    parser.add_argument('--override-project', action = 'store_true', help = 'Override the project output folder.')
 
-    parser.add_argument('--override-device', action = 'store_true', help = 'Override the device files')
+    parser.add_argument('--override-device', action = 'store_true', help = 'Override the device files.')
 
-    parser.add_argument('--override-main', action = 'store_true', help = 'Override main.c')
+    parser.add_argument('--override-main', action = 'store_true', help = 'Override main.')
 
-    parser.add_argument('--override-cmake', action = 'store_true', help = 'Override CMake')
+    parser.add_argument('--override-cmake', action = 'store_true', help = 'Override CMake.')
 
-    parser.add_argument('--output', type = str, default = '.', help = 'Skeleton output path')
+    parser.add_argument('--output', type = str, default = '.', help = 'Skeleton output path.')
 
     parser.add_argument('descr', type = str, help = 'Driver description JSON file')
 

@@ -9,7 +9,7 @@ do
   THIS_SCRIPT=$(readlink "${THIS_SCRIPT}")
 done
 
-NYX_GEN_HOME=$(cd "$(dirname "${THIS_SCRIPT}")" && pwd)/bin/
+NYX_GEN_HOME=$(cd "$(dirname "${THIS_SCRIPT}")" && pwd)/
 
 ########################################################################################################################
 
@@ -18,18 +18,19 @@ NYX_GEN_HOST=$(rustc -Vv | grep '^host:' | cut -f 2 -d ' ')
 ########################################################################################################################
 
 (
-cd ${NYX_GEN_HOME}
+  cd ${NYX_GEN_HOME} || exit 1
 
-rm -fr "${NYX_GEN_HOME}/build/"
+  rm -fr "${NYX_GEN_HOME}/spec/"
+  rm -fr "${NYX_GEN_HOME}/work/"
 
-pyinstaller \
+  PYTHONPATH="${NYX_GEN_HOME}" pyinstaller \
 --onefile \
 --noconfirm \
---distpath "${NYX_GEN_HOME}" \
---specpath "${NYX_GEN_HOME}/build/" \
---workpath "${NYX_GEN_HOME}/build/" \
+--distpath "${NYX_GEN_HOME}/bin/" \
+--specpath "${NYX_GEN_HOME}/spec/" \
+--workpath "${NYX_GEN_HOME}/work/" \
 --name "nyx-gen-${NYX_GEN_HOST}" \
-"${NYX_GEN_HOME}/nyx-gen"
+"${NYX_GEN_HOME}/bin/nyx-gen"
 )
 
 ########################################################################################################################

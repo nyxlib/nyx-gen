@@ -18,7 +18,7 @@ nyx-gen = "nyx_gen.cli:main"
 packages = ["nyx_gen"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/nyx_gen", "/README.md", "/LICENSE", "/pyproject.toml"]
+include = ["nyx_gen", "README.md", "LICENSE", "pyproject.toml"]
 
 [tool.hatch.build]
-exclude = ["/bin/*"]
+exclude = ["bin/*"]
