@@ -44,11 +44,11 @@ fi
 
 # For Nyx Assistant
 
-if [[ -d "${NYX_GEN_HOME}/../src-tauri/binaries/" ]]
+if [[ -d "${NYX_GEN_HOME}/../src-tauri/" ]]
 then
-  echo "Copying '${NYX_GEN_HOME}/bin/nyx-gen-${NYX_GEN_HOST}' to '${NYX_GEN_HOME}/../src-tauri/binaries/'"
- 
-  cp "${NYX_GEN_HOME}/bin/nyx-gen-${NYX_GEN_HOST}" "${NYX_GEN_HOME}/../src-tauri/binaries/"
+  mkdir -p "${NYX_GEN_HOME}/../src-tauri/binaries/"
+
+  cp -v "${NYX_GEN_HOME}/bin/nyx-gen-${NYX_GEN_HOST}" "${NYX_GEN_HOME}/../src-tauri/binaries/"
 fi
 
 ########################################################################################################################
