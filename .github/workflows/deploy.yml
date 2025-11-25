@@ -50,7 +50,7 @@ jobs:
                     python3 --version
                     pyinstaller --version
 
-                    ./gen/build.sh
+                    ./build.sh
 
             -   name: Deploy project
                 shell: bash
