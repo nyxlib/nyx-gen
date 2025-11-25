@@ -1,0 +1,74 @@
+name: Build and Deploy
+
+on:
+    push:
+        branches:
+            - main
+
+concurrency:
+    group: ${{ github.repository }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v4
+                with:
+                    submodules: recursive
+                    fetch-depth: 1
+
+            -   name: Install system dependencies
+                run: |
+                    sudo apt-get update
+                    sudo apt-get install -y file wget curl python3-dev python3-venv openssh-client build-essential
+
+            -   name: Setup PyInstaller
+                shell: bash
+                run: |
+                    python3 -m venv "${HOME}/.venv"
+                    source "${HOME}/.venv/bin/activate"
+                    pip install --upgrade pip
+                    pip install pyinstaller
+
+            -   name: Install Rust toolchain
+                shell: bash
+                run: |
+                    curl -fsSL https://sh.rustup.rs | bash -s -- -y
+
+            -   name: Build project 1/2
+                shell: bash
+                run: |
+                    source "${HOME}/.venv/bin/activate"
+                    source "${HOME}/.nvm/nvm.sh"
+                    source "${HOME}/.cargo/env"
+
+                    rustc --version
+                    cargo --version
+                    python3 --version
+                    pyinstaller --version
+
+                    ./gen/build.sh
+
+            -   name: Deploy project
+                shell: bash
+                env:
+                    SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+                    DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+                    DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+                run: |
+                    mkdir -p ~/.ssh/
+                    chmod 700 ~/.ssh/
+
+                    echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+                    chmod 600 ~/.ssh/id_rsa
+
+                    eval "$(ssh-agent -s)"
+                    ssh-add ~/.ssh/id_rsa
+
+                    ssh-keyscan -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+                    chmod 644 ~/.ssh/known_hosts
+
+                    scp src-tauri/binaries/nyx-gen-* "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/nyxlib.org/download/linux/x86_64/nyx-gen"
