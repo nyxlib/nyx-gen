@@ -42,7 +42,6 @@ jobs:
                 shell: bash
                 run: |
                     source "${HOME}/.venv/bin/activate"
-                    source "${HOME}/.nvm/nvm.sh"
                     source "${HOME}/.cargo/env"
 
                     rustc --version
