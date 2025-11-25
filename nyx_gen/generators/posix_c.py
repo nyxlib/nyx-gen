@@ -233,9 +233,9 @@ int main(int argc, char **argv)
 {
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    STR_t indi_url = {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %};
-    STR_t mqtt_url = {% if descr.enableMQTT %}"{{ descr.mqttURI }}"{% else %}{{ null }}{% endif %};
-    STR_t redis_url = {% if descr.enableRedis %}"{{ descr.redisURI }}"{% else %}{{ null }}{% endif %};
+    STR_t indi_url = {% if descr.enableINDI %}"{{ descr.indiURL }}"{% else %}{{ null }}{% endif %};
+    STR_t mqtt_url = {% if descr.enableMQTT %}"{{ descr.mqttURL }}"{% else %}{{ null }}{% endif %};
+    STR_t redis_url = {% if descr.enableRedis %}"{{ descr.redisURL }}"{% else %}{{ null }}{% endif %};
 
     STR_t mqtt_username = MQTT_USERNAME;
     STR_t mqtt_password = MQTT_PASSWORD;

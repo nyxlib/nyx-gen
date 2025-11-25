@@ -660,14 +660,14 @@ void Driver::glueInitialize()
 
 STR_t Driver::indiURL() const
 {
-    return {%- if descr.enableTCP %} "{{ descr.tcpURI }}" {%- else %} {{ null }} {%- endif %};
+    return {%- if descr.enableINDI %} "{{ descr.indiURL }}" {%- else %} {{ null }} {%- endif %};
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 STR_t Driver::mqttURL() const
 {
-    return {%- if descr.enableMQTT %} "{{ descr.mqttURI }}" {%- else %} {{ null }} {%- endif %};
+    return {%- if descr.enableMQTT %} "{{ descr.mqttURL }}" {%- else %} {{ null }} {%- endif %};
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -688,7 +688,7 @@ STR_t Driver::mqttPassword() const
 
 STR_t Driver::redisURL() const
 {
-    return {%- if descr.enableRedis %} "{{ descr.redisURI }}" {%- else %} {{ null }} {%- endif %};
+    return {%- if descr.enableRedis %} "{{ descr.redisURL }}" {%- else %} {{ null }} {%- endif %};
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

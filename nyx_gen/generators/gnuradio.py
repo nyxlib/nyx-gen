@@ -250,7 +250,7 @@ static void *worker_routine(void *arg)
     node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
-        {% if descr.enableTCP %}"{{ descr.tcpURI }}"{% else %}{{ null }}{% endif %},
+        {% if descr.enableINDI %}"{{ descr.indiURL }}"{% else %}{{ null }}{% endif %},
         mqtt_url,
         mqtt_username,
         mqtt_password,
