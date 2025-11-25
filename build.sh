@@ -15,6 +15,13 @@ NYX_GEN_HOME=$(cd "$(dirname "${THIS_SCRIPT}")" && pwd)/
 
 NYX_GEN_HOST=$(rustc -Vv | grep '^host:' | cut -f 2 -d ' ')
 
+if [[ -z "${NYX_GEN_HOST}" ]]
+then
+  echo 'Rust is not installed!'
+
+  exit 1
+fi
+
 ########################################################################################################################
 
 (

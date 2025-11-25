@@ -7,9 +7,11 @@ name = "nyx-gen"
 version = "1.0.0"
 description = "Nyx code generator"
 readme = "README.md"
-requires-python = ">=3.8"
 license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Jérôme Odier", email = "jerome.odier@lpsc.in2p3.fr" }]
+
+requires-python = ">=3.8"
+dependencies = ["jinja2>=3.0"]
 
 [project.scripts]
 nyx-gen = "nyx_gen.cli:main"
