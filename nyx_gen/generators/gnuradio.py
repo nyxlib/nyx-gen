@@ -177,8 +177,6 @@ install(FILES ./grc/nyx_{{ descr.nodeName|lower }}_sink.block.yml DESTINATION ${
         template = '''
 #define MQTT_USERNAME {% if descr.enableMQTT %}"{{ descr.mqttUsername }}"{% else %}{{ null }}{% endif %}
 #define MQTT_PASSWORD {% if descr.enableMQTT %}"{{ descr.mqttPassword }}"{% else %}{{ null }}{% endif %}
-#define REDIS_USERNAME {% if descr.enableRedis %}"{{ descr.redisUsername }}"{% else %}{{ null }}{% endif %}
-#define REDIS_PASSWORD {% if descr.enableRedis %}"{{ descr.redisPassword }}"{% else %}{{ null }}{% endif %}
 '''[1:]
 
         filename = os.path.join(self._driver_path, 'src', f'credentials.{self._head_ext}')
@@ -202,11 +200,9 @@ __NYX_NULLABLE__ str_t nyx_string_dup(
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 static char mqtt_url[1024];
+static char nss_url[1024];
 static char mqtt_username[1024];
 static char mqtt_password[1024];
-static char redis_url[1024];
-static char redis_username[1024];
-static char redis_password[1024];
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -252,12 +248,10 @@ static void *worker_routine(void *arg)
         vector_list,
         {% if descr.enableINDI %}"{{ descr.indiURL }}"{% else %}{{ null }}{% endif %},
         mqtt_url,
+        nss_url,
         mqtt_username,
         mqtt_password,
         {{ null }},
-        redis_url,
-        redis_username,
-        redis_password,
         3000,
         true
     );
@@ -285,30 +279,24 @@ static PyObject *worker_start(PyObject *self, PyObject *args)
     {
         /*------------------------------------------------------------------------------------------------------------*/
 
-        STR_t py_mqtt_url       = NULL;
-        STR_t py_mqtt_username  = NULL;
-        STR_t py_mqtt_password  = NULL;
-        STR_t py_redis_url      = NULL;
-        STR_t py_redis_username = NULL;
-        STR_t py_redis_password = NULL;
+        STR_t py_mqtt_url      = NULL;
+        STR_t py_nss_url       = NULL;
+        STR_t py_mqtt_username = NULL;
+        STR_t py_mqtt_password = NULL;
 
-        if(!PyArg_ParseTuple(args, "|zzzzzz",
+        if(!PyArg_ParseTuple(args, "|zzzz",
             &py_mqtt_url,
+            &py_nss_url,
             &py_mqtt_username,
             &py_mqtt_password,
-            &py_redis_url,
-            &py_redis_username,
-            &py_redis_password
         )) {
             return NULL;
         }
 
-        strcpy(mqtt_url,       py_mqtt_url       ? py_mqtt_url       : "");
-        strcpy(mqtt_username,  py_mqtt_username  ? py_mqtt_username  : "");
-        strcpy(mqtt_password,  py_mqtt_password  ? py_mqtt_password  : "");
-        strcpy(redis_url,      py_redis_url      ? py_redis_url      : "");
-        strcpy(redis_username, py_redis_username ? py_redis_username : "");
-        strcpy(redis_password, py_redis_password ? py_redis_password : "");
+        strcpy(mqtt_url,      py_mqtt_url      ? py_mqtt_url      : "");
+        strcpy(nss_url,       py_nss_url       ? py_nss_url       : "");
+        strcpy(mqtt_username, py_mqtt_username ? py_mqtt_username : "");
+        strcpy(mqtt_password, py_mqtt_password ? py_mqtt_password : "");
 
         /*------------------------------------------------------------------------------------------------------------*/
 
@@ -453,7 +441,7 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 
         /*------------------------------------------------------------------------------------------------------------*/
 
-        nyx_redis_pub(node, device_name, stream_name, (size_t) max_len, (size_t) n_fields, names, sizes, buffs);
+        //////////////////////nyx_redis_pub(node, device_name, stream_name, (size_t) max_len, (size_t) n_fields, names, sizes, buffs);
 
         /*------------------------------------------------------------------------------------------------------------*/
 
@@ -789,11 +777,11 @@ from gnuradio import gr
 
 ########################################################################################################################
 
-def start(mqtt_url = "", mqtt_username = "", mqtt_password = "", redis_url = "", redis_username = "", redis_password = ""):
+def start(mqtt_url = "", nss_url = "", mqtt_username = "", mqtt_password = ""):
 
     atexit.register(lambda: _mod.stop())
 
-    _mod.start(mqtt_url, mqtt_username, mqtt_password, redis_url, redis_username, redis_password)
+    _mod.start(mqtt_url, nss_url, mqtt_username, mqtt_password)
 
 ########################################################################################################################
 
@@ -893,6 +881,11 @@ parameters:
     dtype: string
     default: ''
 
+  - id: nss_url
+    label: Syx-Stream URL
+    dtype: string
+    default: ''
+
   - id: mqtt_username
     label: MQTT Username
     dtype: string
@@ -901,23 +894,6 @@ parameters:
 
   - id: mqtt_password
     label: MQTT Password
-    dtype: string
-    default: ''
-    hide: part
-
-  - id: redis_url
-    label: Redis URL
-    dtype: string
-    default: ''
-
-  - id: redis_username
-    label: Redis Username
-    dtype: string
-    default: ''
-    hide: part
-
-  - id: redis_password
-    label: Redis Password
     dtype: string
     default: ''
     hide: part
@@ -932,7 +908,7 @@ templates:
   make: |
     None
     atexit.register(lambda: {self._descr["nodeName"]}.stop())
-    {self._descr["nodeName"]}.start(${{mqtt_url}}, ${{mqtt_username}}, ${{mqtt_password}}, ${{redis_url}}, ${{redis_username}}, ${{redis_password}})
+    {self._descr["nodeName"]}.start(${{mqtt_url}}, ${{nss_url}}, ${{mqtt_username}}, ${{mqtt_password}})
 
 {''.join(callback_regs)}
 

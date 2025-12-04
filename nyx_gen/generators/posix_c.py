@@ -153,8 +153,6 @@ void nyx_device_finalize(nyx_node_t *node);
         template = '''
 #define MQTT_USERNAME {% if descr.enableMQTT %}"{{ descr.mqttUsername }}"{% else %}{{ null }}{% endif %}
 #define MQTT_PASSWORD {% if descr.enableMQTT %}"{{ descr.mqttPassword }}"{% else %}{{ null }}{% endif %}
-#define REDIS_USERNAME {% if descr.enableRedis %}"{{ descr.redisUsername }}"{% else %}{{ null }}{% endif %}
-#define REDIS_PASSWORD {% if descr.enableRedis %}"{{ descr.redisPassword }}"{% else %}{{ null }}{% endif %}
 '''[1:]
 
         filename = os.path.join(self._driver_path, 'src', f'credentials.{self._head_ext}')
@@ -194,11 +192,9 @@ static void print_usage(
     STR_t prog,
     STR_t indi_url,
     STR_t mqtt_url,
-    STR_t redis_url,
+    STR_t nss_url,
     STR_t mqtt_username,
     STR_t mqtt_password,
-    STR_t redis_username,
-    STR_t redis_password,
     int node_timeout
 ) {
     fprintf(
@@ -206,23 +202,19 @@ static void print_usage(
         "Usage: %s [options]\\n"
         "\\n"
         "Options:\\n"
-        "  -i URI   INDI server URL (default: %s)\\n"
-        "  -m URI   MQTT broker URL (default: %s)\\n"
-        "  -r URI   Redis server URL (default: %s)\\n"
-        "  -u USER  MQTT username (default: %s)\\n"
-        "  -p PASS  MQTT password (default: %s)\\n"
-        "  -U USER  Redis username (default: %s)\\n"
-        "  -P PASS  Redis password (default: %s)\\n"
-        "  -t MS    Node poll timeout (default: %d)\\n"
-        "  -h       Show this help and exit\\n",
+        "  -i <url>       INDI server URL (default: %s)\\n"
+        "  -m <url>       MQTT broker URL (default: %s)\\n"
+        "  -s <url>       Stream server URL (default: %s)\\n"
+        "  -u <username>  MQTT username (default: %s)\\n"
+        "  -p <password>  MQTT password (default: %s)\\n"
+        "  -t <ms>        Node poll timeout (default: %d)\\n"
+        "  -h             Show this help and exit\\n",
         prog,
         indi_url != NULL && indi_url[0] != '\\0' ? indi_url : "none",
         mqtt_url != NULL && mqtt_url[0] != '\\0' ? mqtt_url : "none",
-        redis_url != NULL && redis_url[0] != '\\0' ? redis_url : "none",
+        nss_url != NULL && nss_url[0] != '\\0' ? nss_url : "none",
         mqtt_username != NULL && mqtt_username[0] != '\\0' ? mqtt_username : "none",
         mqtt_password != NULL && mqtt_password[0] != '\\0' ? mqtt_password : "none",
-        redis_username != NULL && redis_username[0] != '\\0' ? redis_username : "none",
-        redis_password != NULL && redis_password[0] != '\\0' ? redis_password : "none",
         node_timeout
     );
 }
@@ -235,12 +227,10 @@ int main(int argc, char **argv)
 
     STR_t indi_url = {% if descr.enableINDI %}"{{ descr.indiURL }}"{% else %}{{ null }}{% endif %};
     STR_t mqtt_url = {% if descr.enableMQTT %}"{{ descr.mqttURL }}"{% else %}{{ null }}{% endif %};
-    STR_t redis_url = {% if descr.enableRedis %}"{{ descr.redisURL }}"{% else %}{{ null }}{% endif %};
+    STR_t nss_url = {% if descr.enableNSS %}"{{ descr.nssURL }}"{% else %}{{ null }}{% endif %};
 
     STR_t mqtt_username = MQTT_USERNAME;
     STR_t mqtt_password = MQTT_PASSWORD;
-    STR_t redis_username = REDIS_USERNAME;
-    STR_t redis_password = REDIS_PASSWORD;
 
     int node_timeout = {{ descr.nodeTimeout }};
 
@@ -248,7 +238,7 @@ int main(int argc, char **argv)
 
     int opt;
 
-    while((opt = getopt(argc, argv, "i:m:r:u:p:U:P:t:h")) != -1)
+    while((opt = getopt(argc, argv, "i:m:s:u:p:t:h")) != -1)
     {
         switch (opt)
         {
@@ -258,20 +248,14 @@ int main(int argc, char **argv)
             case 'm':
                 mqtt_url = optarg;
                 break;
-            case 'r':
-                redis_url = optarg;
+            case 's':
+                nss_url = optarg;
                 break;
             case 'u':
                 mqtt_username = optarg;
                 break;
             case 'p':
                 mqtt_password = optarg;
-                break;
-            case 'U':
-                redis_username = optarg;
-                break;
-            case 'P':
-                redis_password = optarg;
                 break;
             case 't':
                 node_timeout = atoi(optarg);
@@ -282,11 +266,9 @@ int main(int argc, char **argv)
                     argv[0],
                     indi_url,
                     mqtt_url,
-                    redis_url,
+                    nss_url,
                     mqtt_username,
                     mqtt_password,
-                    redis_username,
-                    redis_password,
                     node_timeout
                 );
 
@@ -324,12 +306,10 @@ int main(int argc, char **argv)
         vector_list,
         indi_url,
         mqtt_url,
+        stream_url,
         mqtt_username,
         mqtt_password,
         {{ null }},
-        redis_url,
-        redis_username,
-        redis_password,
         3000,
         true
     );

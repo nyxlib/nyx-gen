@@ -590,14 +590,11 @@ protected:
     /*----------------------------------------------------------------------------------------------------------------*/
 
     STR_t indiURL() const override;
-
     STR_t mqttURL() const override;
+    STR_t nssURL() const override;
+
     STR_t mqttUsername() const override;
     STR_t mqttPassword() const override;
-
-    STR_t redisURL() const override;
-    STR_t redisUsername() const override;
-    STR_t redisPassword() const override;
 
     int nodeTimeoutMS() const override;
 
@@ -672,6 +669,13 @@ STR_t Driver::mqttURL() const
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+STR_t Driver::nssURL() const
+{
+    return {%- if descr.enableNSS %} "{{ descr.nssURL }}" {%- else %} {{ null }} {%- endif %};
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 STR_t Driver::mqttUsername() const
 {
     return MQTT_USERNAME;
@@ -682,27 +686,6 @@ STR_t Driver::mqttUsername() const
 STR_t Driver::mqttPassword() const
 {
     return MQTT_PASSWORD;
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-STR_t Driver::redisURL() const
-{
-    return {%- if descr.enableRedis %} "{{ descr.redisURL }}" {%- else %} {{ null }} {%- endif %};
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-STR_t Driver::redisUsername() const
-{
-    return REDIS_USERNAME;
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-STR_t Driver::redisPassword() const
-{
-    return REDIS_PASSWORD;
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -737,8 +720,6 @@ int Driver::nodeTimeoutMS() const
         template = '''
 #define MQTT_USERNAME {% if descr.enableMQTT %}"{{ descr.mqttUsername }}"{% else %}{{ null }}{% endif %}
 #define MQTT_PASSWORD {% if descr.enableMQTT %}"{{ descr.mqttPassword }}"{% else %}{{ null }}{% endif %}
-#define REDIS_USERNAME {% if descr.enableRedis %}"{{ descr.redisUsername }}"{% else %}{{ null }}{% endif %}
-#define REDIS_PASSWORD {% if descr.enableRedis %}"{{ descr.redisPassword }}"{% else %}{{ null }}{% endif %}
 '''[1:]
 
         filename = os.path.join(self._driver_path, 'src', f'credentials.{self._head_ext}')
