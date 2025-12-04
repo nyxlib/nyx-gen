@@ -306,7 +306,7 @@ int main(int argc, char **argv)
         vector_list,
         indi_url,
         mqtt_url,
-        stream_url,
+        nss_url,
         mqtt_username,
         mqtt_password,
         {{ null }},
