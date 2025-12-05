@@ -288,7 +288,7 @@ static PyObject *worker_start(PyObject *self, PyObject *args)
             &py_mqtt_url,
             &py_nss_url,
             &py_mqtt_username,
-            &py_mqtt_password,
+            &py_mqtt_password
         )) {
             return NULL;
         }
@@ -411,12 +411,15 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 
         Py_ssize_t n_fields = PyDict_Size(field_dict);
 
-        STR_t  *names = nyx_memory_alloc(n_fields * sizeof(str_t ));
-        size_t *sizes = nyx_memory_alloc(n_fields * sizeof(size_t));
-        BUFF_t *buffs = nyx_memory_alloc(n_fields * sizeof(buff_t));
+        uint32_t hashes[n_fields];
+        size_t sizes[n_fields];
+        BUFF_t buffs[n_fields];
 
         /*------------------------------------------------------------------------------------------------------------*/
 
+        Py_ssize_t name_len;
+        STR_t      name_buf;
+            
         PyObject *keys = PyDict_Keys(field_dict);
 
         for(Py_ssize_t i = 0; i < n_fields; i++)
@@ -426,28 +429,22 @@ static PyObject *stream_pub(PyObject *self, PyObject *args)
 
             if(!PyUnicode_Check(key) || !PyBytes_Check(val))
             {
-                nyx_memory_free(names);
-                nyx_memory_free(sizes);
-                nyx_memory_free(buffs);
-
                 PyErr_SetString(PyExc_TypeError, "Each field must be {name: bytes}");
                 return NULL;
             }
 
-            names[i] = (str_t) PyUnicode_AsUTF8(key);
+            name_buf = PyUnicode_AsUTF8AndSize(key, &name_len);
+
+            hashes[i] = nyx_hash(name_len, name_buf, 0x5358594EU);
             sizes[i] = (size_t) PyBytes_Size(val);
             buffs[i] = (buff_t) PyBytes_AsString(val);
         }
 
         /*------------------------------------------------------------------------------------------------------------*/
 
-        //////////////////////nyx_redis_pub(node, device_name, stream_name, (size_t) max_len, (size_t) n_fields, names, sizes, buffs);
-
+        nyx_nss_pub(node, device_name, stream_name, (size_t) n_fields, hashes, sizes, buffs);
+	
         /*------------------------------------------------------------------------------------------------------------*/
-
-        nyx_memory_free(names);
-        nyx_memory_free(sizes);
-        nyx_memory_free(buffs);
 
         Py_RETURN_NONE;
 
