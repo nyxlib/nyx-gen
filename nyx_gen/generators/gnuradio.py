@@ -199,6 +199,7 @@ __NYX_NULLABLE__ str_t nyx_string_dup(
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+static char indi_url[1024];
 static char mqtt_url[1024];
 static char nss_url[1024];
 static char mqtt_username[1024];
@@ -246,7 +247,7 @@ static void *worker_routine(void *arg)
     node = nyx_node_initialize(
         "{{ descr.nodeName }}",
         vector_list,
-        {% if descr.enableINDI %}"{{ descr.indiURL }}"{% else %}{{ null }}{% endif %},
+        indi_url,
         mqtt_url,
         nss_url,
         mqtt_username,
@@ -279,12 +280,14 @@ static PyObject *worker_start(PyObject *self, PyObject *args)
     {
         /*------------------------------------------------------------------------------------------------------------*/
 
+        STR_t py_indi_url      = NULL;
         STR_t py_mqtt_url      = NULL;
         STR_t py_nss_url       = NULL;
         STR_t py_mqtt_username = NULL;
         STR_t py_mqtt_password = NULL;
 
-        if(!PyArg_ParseTuple(args, "|zzzz",
+        if(!PyArg_ParseTuple(args, "|zzzzz",
+            &py_indi_url,
             &py_mqtt_url,
             &py_nss_url,
             &py_mqtt_username,
@@ -293,6 +296,7 @@ static PyObject *worker_start(PyObject *self, PyObject *args)
             return NULL;
         }
 
+        strcpy(indi_url,      py_indi_url      ? py_indi_url      : "");
         strcpy(mqtt_url,      py_mqtt_url      ? py_mqtt_url      : "");
         strcpy(nss_url,       py_nss_url       ? py_nss_url       : "");
         strcpy(mqtt_username, py_mqtt_username ? py_mqtt_username : "");
@@ -774,11 +778,11 @@ from gnuradio import gr
 
 ########################################################################################################################
 
-def start(mqtt_url = "", nss_url = "", mqtt_username = "", mqtt_password = ""):
+def start(indi_url = "", mqtt_url = "", nss_url = "", mqtt_username = "", mqtt_password = ""):
 
     atexit.register(lambda: _mod.stop())
 
-    _mod.start(mqtt_url, nss_url, mqtt_username, mqtt_password)
+    _mod.start(indi_url, mqtt_url, nss_url, mqtt_username, mqtt_password)
 
 ########################################################################################################################
 
@@ -873,13 +877,18 @@ category: '[Nyx]/{self._descr["nodeName"]}'
 flags: [ python ]
 
 parameters:
+  - id: indi_url
+    label: INDI URL
+    dtype: string
+    default: ''
+
   - id: mqtt_url
     label: MQTT URL
     dtype: string
     default: ''
 
   - id: nss_url
-    label: Syx-Stream URL
+    label: Stream URL
     dtype: string
     default: ''
 
@@ -905,7 +914,7 @@ templates:
   make: |
     None
     atexit.register(lambda: {self._descr["nodeName"]}.stop())
-    {self._descr["nodeName"]}.start(${{mqtt_url}}, ${{nss_url}}, ${{mqtt_username}}, ${{mqtt_password}})
+    {self._descr["nodeName"]}.start(${{indi_url}}, ${{mqtt_url}}, ${{nss_url}}, ${{mqtt_username}}, ${{mqtt_password}})
 
 {''.join(callback_regs)}
 
