@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
     build:
-        runs-on: [ubuntu-latest, macos-latest]
+        runs-on: ubuntu-latest
 
         steps:
             -   name: Checkout repository
@@ -21,7 +21,6 @@ jobs:
                     fetch-depth: 1
 
             -   name: Install system dependencies
-                if: runner.os == 'Linux'
                 run: |
                     sudo apt-get update
                     sudo apt-get install -y file wget curl python3-dev python3-venv openssh-client build-essential
@@ -71,9 +70,4 @@ jobs:
                     ssh-keyscan -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
                     chmod 644 ~/.ssh/known_hosts
 
-                    if [[ "${{ runner.os }}" == "Linux" ]]
-                    then
-                        scp ./bin/nyx-gen-* "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/nyxlib.org/download/linux/x86_64/nyx-gen"
-                    else
-                        scp ./bin/nyx-gen-* "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/nyxlib.org/download/macos/x86_64/nyx-gen"
-                    fi
+                    scp ./bin/nyx-gen-* "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/nyxlib.org/download/linux/x86_64/nyx-gen"
