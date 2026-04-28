@@ -649,7 +649,7 @@ namespace nyx_{{ descr.nodeName|lower }} {
 void Driver::glueInitialize()
 {
 {%- for d in devices %}
-    this->registerDevice(std::unique_ptr<Nyx::BaseDevice>(new Device{{ d.name|pascalcase }}()));
+    this->registerDevice(std::make_unique<Device{{ d.name|pascalcase }}>());
 {%- endfor %}
 }
 
