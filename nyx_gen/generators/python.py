@@ -30,6 +30,12 @@ class PythonGenerator(AbstractGenerator):
 
     ####################################################################################################################
 
+    def create_directories(self) -> None:
+
+        os.makedirs(os.path.join(self._driver_path, 'autogen'), exist_ok = True)
+
+    ####################################################################################################################
+
     def generate(self) -> None:
 
         self._generate_package()
@@ -193,7 +199,7 @@ class PythonGenerator(AbstractGenerator):
 ########################################################################################################################
 '''[1:]
 
-        filename = os.path.join(self._driver_path, 'src', 'autogen', '__init__.py')
+        filename = os.path.join(self._driver_path, 'autogen', '__init__.py')
 
         with open(filename, 'wt', encoding = 'utf-8') as f:
 
@@ -337,7 +343,7 @@ class Device{{ device.name|pascalcase }}Glue:
 
         for device in self._devices:
 
-            filename = os.path.join(self._driver_path, 'src', 'autogen', f'glue_{device["name"].lower()}.py')
+            filename = os.path.join(self._driver_path, 'autogen', f'glue_{device["name"].lower()}.py')
 
             with open(filename, 'wt', encoding = 'utf-8') as f:
 
@@ -401,7 +407,7 @@ class Device{{ device.name|pascalcase }}(Device{{ device.name|pascalcase }}Glue)
 
         for device in self._devices:
 
-            filename = os.path.join(self._driver_path, 'src', f'device_{device["name"].lower()}.py')
+            filename = os.path.join(self._driver_path, f'device_{device["name"].lower()}.py')
 
             if self._override_device or not os.path.isfile(filename):
 
@@ -428,7 +434,7 @@ MQTT_PASSWORD = {% if descr.enableMQTT %}{{ string(descr.mqttPassword) }}{% else
 ########################################################################################################################
 '''[1:]
 
-        filename = os.path.join(self._driver_path, 'src', 'credentials.py')
+        filename = os.path.join(self._driver_path, 'credentials.py')
 
         with open(filename, 'wt', encoding = 'utf-8') as f:
 
@@ -554,7 +560,7 @@ if __name__ == '__main__':
 ########################################################################################################################
 '''[1:]
 
-        filename = os.path.join(self._driver_path, 'src', 'main.py')
+        filename = os.path.join(self._driver_path, 'main.py')
 
         if self._override_main or not os.path.isfile(filename):
 
