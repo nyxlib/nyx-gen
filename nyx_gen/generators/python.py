@@ -360,7 +360,7 @@ class Device{{ device.name|pascalcase }}Glue:
 # -*- coding: utf-8 -*-
 ########################################################################################################################
 
-from autogen.glue_{{ device.name|lower }} import Device{{ device.name|pascalcase }}Glue
+from .autogen.glue_{{ device.name|lower }} import Device{{ device.name|pascalcase }}Glue
 
 ########################################################################################################################
 
@@ -452,13 +452,12 @@ MQTT_PASSWORD = {% if descr.enableMQTT %}{{ string(descr.mqttPassword) }}{% else
 ########################################################################################################################
 
 import nyx
-import sys
 import signal
 import argparse
 
-from credentials import MQTT_PASSWORD, MQTT_USERNAME
+from .credentials import MQTT_PASSWORD, MQTT_USERNAME
 {%- for d in devices %}
-from device_{{ d.name|lower }} import Device{{ d.name|pascalcase }}
+from .device_{{ d.name|lower }} import Device{{ d.name|pascalcase }}
 {%- endfor %}
 
 ########################################################################################################################
@@ -555,7 +554,7 @@ def main() -> int:
 
 if __name__ == '__main__':
 
-    sys.exit(main())
+    SystemExit(main())
 
 ########################################################################################################################
 '''[1:]
