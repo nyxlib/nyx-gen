@@ -560,7 +560,7 @@ if __name__ == '__main__':
 ########################################################################################################################
 '''[1:]
 
-        filename = os.path.join(self._driver_path, 'main.py')
+        filename = os.path.join(self._driver_path, '__init__.py')
 
         if self._override_main or not os.path.isfile(filename):
 
