@@ -42,6 +42,7 @@ class PythonGenerator(AbstractGenerator):
         self._generate_glues()
         self._generate_devices()
         self._generate_credentials()
+        self._generate_init()
         self._generate_main()
 
     ####################################################################################################################
@@ -444,7 +445,7 @@ MQTT_PASSWORD = {% if descr.enableMQTT %}{{ string(descr.mqttPassword) }}{% else
 
     ####################################################################################################################
 
-    def _generate_main(self) -> None:
+    def _generate_init(self) -> None:
 
         template = '''
 #!/usr/bin/env python3
@@ -563,6 +564,10 @@ def main() -> int:
                     template,
                     devices = self._devices
                 ))
+
+    ####################################################################################################################
+
+    def _generate_main(self) -> None:
 
         template = '''
 #!/usr/bin/env python3
