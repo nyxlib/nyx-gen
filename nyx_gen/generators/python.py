@@ -226,7 +226,9 @@ class Device{{ device.name|pascalcase }}Glue:
 
     ####################################################################################################################
 
-    def __init__(self):
+    def __init__(self, node: nyx.NyxNode):
+
+        self._node = node
 
         ################################################################################################################
         # INITIALIZE VECTORS                                                                                           #
@@ -308,6 +310,13 @@ class Device{{ device.name|pascalcase }}Glue:
             self.vector_{{ v.name|lower }},
 {%- endfor %}
         ]
+
+    ####################################################################################################################
+
+    @property
+    def node(self) -> nyx.NyxNode:
+
+        return self._node
 
     ####################################################################################################################
 
@@ -530,6 +539,8 @@ def main() -> int:
         try:
 
             for device in devices:
+            
+                device._node = node
 
                 device.initialize(node)
 
