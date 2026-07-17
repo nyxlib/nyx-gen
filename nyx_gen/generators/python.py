@@ -228,7 +228,7 @@ class Device{{ device.name|pascalcase }}Glue:
 
     def __init__(self):
 
-        self._nod: nyx.NyxNode = None
+        self._node: nyx.NyxNode = None
 
         ################################################################################################################
         # INITIALIZE VECTORS                                                                                           #
@@ -317,6 +317,13 @@ class Device{{ device.name|pascalcase }}Glue:
     def node(self) -> nyx.NyxNode:
 
         return self._node
+
+    ####################################################################################################################
+
+    @node.setter
+    def node(self, node: nyx.NyxNode):
+        
+        self._node = node
 
     ####################################################################################################################
 
