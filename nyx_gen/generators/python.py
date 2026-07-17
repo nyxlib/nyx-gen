@@ -547,7 +547,7 @@ def main() -> int:
 
             for device in devices:
             
-                device._node = node
+                device.node = node
 
                 device.initialize(node)
 
