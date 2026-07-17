@@ -116,7 +116,7 @@ class PythonGenerator(AbstractGenerator):
     ####################################################################################################################
 
     @staticmethod
-    def _prop_class(vector_type: str, number_format: str = None) -> str:
+    def _prop_class(vector_type: str, number_format: str | None = None) -> str:
 
         if vector_type == 'number':
 
@@ -485,14 +485,18 @@ def main() -> int:
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-i', '--indi-url', default = {% if descr.enableINDI %}{{ string(descr.indiURL) }}{% else %}None{% endif %})
-    parser.add_argument('-m', '--mqtt-url', default = {% if descr.enableMQTT %}{{ string(descr.mqttURL) }}{% else %}None{% endif %})
-    parser.add_argument('-s', '--stream-url', default = {% if descr.enableNSS %}{{ string(descr.nssURL) }}{% else %}None{% endif %})
+    group = parser.add_argument_group(
+        title = 'Nyx',
+    )
+    
+    group.add_argument('-i', '--indi-url', default = {% if descr.enableINDI %}{{ string(descr.indiURL) }}{% else %}None{% endif %}, metavar = 'URL')
+    group.add_argument('-m', '--mqtt-url', default = {% if descr.enableMQTT %}{{ string(descr.mqttURL) }}{% else %}None{% endif %}, metavar = 'URL')
+    group.add_argument('-s', '--stream-url', default = {% if descr.enableNSS %}{{ string(descr.nssURL) }}{% else %}None{% endif %}, metavar = 'URL')
 
-    parser.add_argument('-u', '--mqtt-username', default = MQTT_USERNAME)
-    parser.add_argument('-p', '--mqtt-password', default = MQTT_PASSWORD)
+    group.add_argument('-u', '--mqtt-username', default = MQTT_USERNAME, metavar = 'USERNAME')
+    group.add_argument('-p', '--mqtt-password', default = MQTT_PASSWORD, metavar = 'PASSWORD')
 
-    parser.add_argument('-t', '--node-timeout', type = int, default = {{ descr.nodeTimeout }})
+    group.add_argument('-t', '--node-timeout', type = int, default = {{ descr.nodeTimeout }}, metavar = 'MILLISECONDS')
 
     args = parser.parse_args()
 
