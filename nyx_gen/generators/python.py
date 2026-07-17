@@ -236,7 +236,7 @@ class Device{{ device.name|pascalcase }}Glue:
 {%- for v in device.vectors %}
 
         ################################################################################################
-        # {{ '%-92s'|format('VECTOR ' ~ device.name|upper ~ '::' ~ v.name|upper) }}#
+        # {{ '%-92s'|format('VECTOR ' ~ device.name|upper ~ '::' ~ v.name|upper) }} #
         ################################################################################################
 {%- for df in v.defs %}
 
