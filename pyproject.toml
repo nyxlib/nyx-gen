@@ -8,7 +8,9 @@ version = "1.0.0"
 description = "Nyx code generator"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
-authors = [{ name = "Jérôme Odier", email = "jerome.odier@lpsc.in2p3.fr" }]
+authors = [
+    {name = "Jérôme ODIER", email = "jerome.odier@lpsc.in2p3.fr"},
+]
 
 requires-python = ">=3.8"
 dependencies = ["jinja2>=3.0"]
