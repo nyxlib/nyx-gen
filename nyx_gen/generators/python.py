@@ -235,9 +235,9 @@ class Device{{ device.name|pascalcase }}Glue:
         ################################################################################################################
 {%- for v in device.vectors %}
 
-        ################################################################################################################
-        # {{ '%-108s'|format('VECTOR ' ~ device.name|upper ~ '::' ~ v.name|upper) }}#
-        ################################################################################################################
+        ################################################################################################
+        # {{ '%-92s'|format('VECTOR ' ~ device.name|upper ~ '::' ~ v.name|upper) }}#
+        ################################################################################################
 {%- for df in v.defs %}
 
         self.vector_{{ v.name|lower }}_{{ df.name|lower }} = nyx.{{ prop_class(v.type, df.format|default(None)) }}(
@@ -264,7 +264,7 @@ class Device{{ device.name|pascalcase }}Glue:
 {%- endfor %}
 
         self.vector_{{ v.name|lower }} = nyx.{{ vector_class(v.type) }}(
-            self.name(),
+            self.name,
             {{ string(v.name) }},
             {{ enum(v.state, 'NyxState', 'NYX_STATE_') }},{% if v.type not in ('light', 'stream') %}
             {{ enum(v.perm, 'NyxPerm', 'NYX_PERM_') }},{% endif %}{% if v.type == 'switch' %}
@@ -293,16 +293,16 @@ class Device{{ device.name|pascalcase }}Glue:
 {%- endif %}
 {%- endfor %}
 
-        ################################################################################################################
-
     ####################################################################################################################
 
+    @property
     def name(self) -> str:
 
         return {{ string(device.name) }}
 
     ####################################################################################################################
 
+    @property
     def vectors(self) -> list:
 
         return [
@@ -511,7 +511,7 @@ def main() -> int:
     vector_list = [
         vector
         for device in devices
-        for vector in device.vectors()
+        for vector in device.vectors
     ]
 
     ####################################################################################################################
